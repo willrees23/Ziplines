@@ -1,0 +1,9 @@
+name: Ziplines
+description: Create ziplines in Minecraft
+version: ${project.version}
+main: com.github.willrees23.ZiplinesPlugin
+commands:
+  ziplines:
+    description: Main command for the Ziplines plugin.
+    usage: /<command>
+    aliases: [ zipline, zl ]
