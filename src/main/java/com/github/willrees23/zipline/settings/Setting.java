@@ -37,31 +37,6 @@ final class Setting<T> {
         this.nullable = nullable;
     }
 
-    /** Returns the current value formatted the way {@link #write} expects to read it back. */
-    String read(ZiplineSettings settings) {
-        T value = reader.apply(settings);
-        return value == null ? ZiplineOption.NONE : printer.apply(value);
-    }
-
-    /** Parses {@code raw} and stores it, returning {@code false} if the value was rejected. */
-    boolean write(ZiplineSettings settings, String raw) {
-        if (nullable && raw.equalsIgnoreCase(ZiplineOption.NONE)) {
-            writer.accept(settings, null);
-            return true;
-        }
-        T value = parser.apply(raw);
-        if (value == null) {
-            return false;
-        }
-        writer.accept(settings, value);
-        return true;
-    }
-
-    /** Transfers the value between two settings objects without going through text. */
-    void copy(ZiplineSettings from, ZiplineSettings to) {
-        writer.accept(to, reader.apply(from));
-    }
-
     static Setting<Double> number(double minimum,
                                   double maximum,
                                   Function<ZiplineSettings, Double> reader,
@@ -98,7 +73,9 @@ final class Setting<T> {
         return new Setting<>(raw -> parseConstant(type, raw), Enum::name, reader, writer, false);
     }
 
-    /** Accepts any material that can be placed as a block. */
+    /**
+     * Accepts any material that can be placed as a block.
+     */
     static Setting<Material> block(Function<ZiplineSettings, Material> reader,
                                    BiConsumer<ZiplineSettings, Material> writer) {
         return new Setting<>(raw -> {
@@ -119,7 +96,9 @@ final class Setting<T> {
         }, Particle::name, reader, writer, false);
     }
 
-    /** Accepts a sound name or {@code NONE} to silence it. */
+    /**
+     * Accepts a sound name or {@code NONE} to silence it.
+     */
     static Setting<Sound> sound(Function<ZiplineSettings, Sound> reader,
                                 BiConsumer<ZiplineSettings, Sound> writer) {
         return new Setting<>(Sounds::parse, Sounds::name, reader, writer, true);
@@ -147,5 +126,36 @@ final class Setting<T> {
         } catch (NumberFormatException exception) {
             return null;
         }
+    }
+
+    /**
+     * Returns the current value formatted the way {@link #write} expects to read it back.
+     */
+    String read(ZiplineSettings settings) {
+        T value = reader.apply(settings);
+        return value == null ? ZiplineOption.NONE : printer.apply(value);
+    }
+
+    /**
+     * Parses {@code raw} and stores it, returning {@code false} if the value was rejected.
+     */
+    boolean write(ZiplineSettings settings, String raw) {
+        if (nullable && raw.equalsIgnoreCase(ZiplineOption.NONE)) {
+            writer.accept(settings, null);
+            return true;
+        }
+        T value = parser.apply(raw);
+        if (value == null) {
+            return false;
+        }
+        writer.accept(settings, value);
+        return true;
+    }
+
+    /**
+     * Transfers the value between two settings objects without going through text.
+     */
+    void copy(ZiplineSettings from, ZiplineSettings to) {
+        writer.accept(to, reader.apply(from));
     }
 }

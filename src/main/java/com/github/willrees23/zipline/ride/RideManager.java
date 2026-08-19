@@ -18,28 +18,33 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-/** Tracks who is currently riding, starts new rides, and cleans up when one ends. */
+/**
+ * Tracks who is currently riding, starts new rides, and cleans up when one ends.
+ */
 public final class RideManager {
 
     private static final long RIDE_INTERVAL = 1L;
 
-    /** Keeps a player who has just been dropped at an endpoint from immediately boarding again. */
+    /**
+     * Keeps a player who has just been dropped at an endpoint from immediately boarding again.
+     */
     private static final long TRIGGER_COOLDOWN_MILLIS = 1000L;
 
-    /** How long after a ride a player stays safe from fall damage caused by the drop. */
+    /**
+     * How long after a ride a player stays safe from fall damage caused by the drop.
+     */
     private static final long FALL_GRACE_MILLIS = 10000L;
 
-    /** Fraction of ride speed carried into the drop, so riders do not stop dead at the end. */
+    /**
+     * Fraction of ride speed carried into the drop, so riders do not stop dead at the end.
+     */
     private static final double DROP_CARRY = 0.5;
 
-    /** Minimum upward share of a launch, so a launch off a level line still throws the rider up. */
+    /**
+     * Minimum upward share of a launch, so a launch off a level line still throws the rider up.
+     */
     private static final double LAUNCH_LIFT = 0.35;
 
     private final ZiplineConfig config;
@@ -168,7 +173,7 @@ public final class RideManager {
      * Decides what to do when a rider dismounts their seat.
      *
      * @return {@code true} if the dismount should be cancelled, which is how a rider is kept in
-     *         their seat on a zipline that does not allow bailing out
+     * their seat on a zipline that does not allow bailing out
      */
     public boolean handleDismount(Player player, Entity vehicle) {
         ZiplineRide ride = rides.get(player.getUniqueId());
@@ -194,7 +199,9 @@ public final class RideManager {
         return expiry != null && expiry > System.currentTimeMillis();
     }
 
-    /** Drops everything remembered about a player, for when they quit or die mid-ride. */
+    /**
+     * Drops everything remembered about a player, for when they quit or die mid-ride.
+     */
     public void forget(Player player) {
         end(player.getUniqueId(), true);
         triggerCooldowns.remove(player.getUniqueId());

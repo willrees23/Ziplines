@@ -1,6 +1,8 @@
 package com.github.willrees23;
 
-/** The permission nodes declared in {@code plugin.yml}. */
+/**
+ * The permission nodes declared in {@code plugin.yml}.
+ */
 public enum ZiplinePermission {
 
     ZIPLINE_START("ziplines.start"),

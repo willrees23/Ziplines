@@ -24,7 +24,9 @@ public final class PreviewTask {
     private static final long INTERVAL = 1L;
     private static final double STEP = 0.4;
 
-    /** Caps the work per tick on a long preview; the far end simply stops being drawn. */
+    /**
+     * Caps the work per tick on a long preview; the far end simply stops being drawn.
+     */
     private static final int MAX_POINTS = 200;
 
     private final Map<UUID, Zipline> pending;

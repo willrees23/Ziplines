@@ -5,11 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.BlockDisplay;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Keeps a block display parked at each end of every zipline, so players can see where a line can be
@@ -68,7 +64,9 @@ public class SeatManager {
         }
     }
 
-    /** Places the display at ride height, turned to face along the line. */
+    /**
+     * Places the display at ride height, turned to face along the line.
+     */
     private Location seatLocation(Zipline zipline, Location endpoint, Location facing) {
         Location location = endpoint.clone();
         location.setY(zipline.getProfile().rideHeight(endpoint.getX(), endpoint.getZ(), endpoint.getY()));

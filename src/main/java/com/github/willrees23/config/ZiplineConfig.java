@@ -7,7 +7,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** The contents of {@code config.yml}: the server-wide defaults for new ziplines. */
+/**
+ * The contents of {@code config.yml}: the server-wide defaults for new ziplines.
+ */
 public class ZiplineConfig {
 
     private static final double DEFAULT_TRIGGER_RADIUS = 1.5;
@@ -17,15 +19,21 @@ public class ZiplineConfig {
 
     private final JavaPlugin plugin;
 
-    /** Settings a newly created zipline starts with. */
+    /**
+     * Settings a newly created zipline starts with.
+     */
     @Getter
     private ZiplineSettings defaults = new ZiplineSettings();
 
-    /** How close to an endpoint a player has to be for the trigger to fire. */
+    /**
+     * How close to an endpoint a player has to be for the trigger to fire.
+     */
     @Getter
     private double triggerRadius = DEFAULT_TRIGGER_RADIUS;
 
-    /** Longest zipline that may be built, which also bounds the work each path operation does. */
+    /**
+     * Longest zipline that may be built, which also bounds the work each path operation does.
+     */
     @Getter
     private int maxLength = DEFAULT_MAX_LENGTH;
 

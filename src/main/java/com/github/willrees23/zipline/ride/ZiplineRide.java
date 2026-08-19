@@ -26,10 +26,14 @@ import org.bukkit.util.Vector;
 @Getter
 public class ZiplineRide {
 
-    /** Correction is capped at this multiple of ride speed, so a knock does not fling the rider. */
+    /**
+     * Correction is capped at this multiple of ride speed, so a knock does not fling the rider.
+     */
     private static final double MAX_CORRECTION = 2.0;
 
-    /** Floor for that cap, so a slow zipline can still pull a displaced rider back to the line. */
+    /**
+     * Floor for that cap, so a slow zipline can still pull a displaced rider back to the line.
+     */
     private static final double MIN_CORRECTION = 0.5;
 
     private final Player player;
@@ -62,7 +66,9 @@ public class ZiplineRide {
                 : null;
     }
 
-    /** Advances the ride by one tick, returning {@code false} once it should end. */
+    /**
+     * Advances the ride by one tick, returning {@code false} once it should end.
+     */
     public boolean tick() {
         if (!player.isOnline() || !player.getWorld().equals(zipline.getStart().getWorld())) {
             return false;
@@ -88,7 +94,9 @@ public class ZiplineRide {
         }
     }
 
-    /** Distance travelled is tracked directly, since the seat goes exactly where it is told. */
+    /**
+     * Distance travelled is tracked directly, since the seat goes exactly where it is told.
+     */
     private boolean tickMounted() {
         if (!seat.isMounted(player)) {
             return false;
@@ -129,7 +137,9 @@ public class ZiplineRide {
         return true;
     }
 
-    /** The point on the line at the given distance, dropped to ride height and turned to face along it. */
+    /**
+     * The point on the line at the given distance, dropped to ride height and turned to face along it.
+     */
     private Location ridePoint(double distance) {
         Vector point = origin.clone().add(direction.clone().multiply(distance));
         return new Location(zipline.getStart().getWorld(),

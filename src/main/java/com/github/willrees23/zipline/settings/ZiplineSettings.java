@@ -17,7 +17,9 @@ import org.bukkit.Sound;
 @Setter
 public class ZiplineSettings {
 
-    /** Minecraft clamps playback pitch to this range, so there is no point accepting more. */
+    /**
+     * Minecraft clamps playback pitch to this range, so there is no point accepting more.
+     */
     public static final double MIN_PITCH = 0.5;
     public static final double MAX_PITCH = 2.0;
 
@@ -47,12 +49,16 @@ public class ZiplineSettings {
     private boolean fallDamage = false;
     private boolean sneakExit = false;
 
-    /** Converts the player-facing speed into the distance covered per server tick. */
+    /**
+     * Converts the player-facing speed into the distance covered per server tick.
+     */
     public double getBlocksPerTick() {
         return speed * SPEED_SCALE;
     }
 
-    /** Interpolates the ride pitch across the length of the ride, so the sound rises as you travel. */
+    /**
+     * Interpolates the ride pitch across the length of the ride, so the sound rises as you travel.
+     */
     public double ridePitch(double progress) {
         double clamped = Math.max(0, Math.min(1, progress));
         return rideSoundPitchStart + (rideSoundPitchEnd - rideSoundPitchStart) * clamped;

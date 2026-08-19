@@ -12,7 +12,9 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Draws the line as real blocks, remembering what it replaced so that the change can be undone. */
+/**
+ * Draws the line as real blocks, remembering what it replaced so that the change can be undone.
+ */
 public class BlockPathRenderer implements PathRenderer {
 
     @Override

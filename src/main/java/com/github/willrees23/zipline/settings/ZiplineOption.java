@@ -89,7 +89,9 @@ public enum ZiplineOption {
             Setting.flag(ZiplineSettings::isSneakExit, ZiplineSettings::setSneakExit),
             Suggestions.of("true", "false"));
 
-    /** The value that clears an optional setting, and what an unset setting reads back as. */
+    /**
+     * The value that clears an optional setting, and what an unset setting reads back as.
+     */
     public static final String NONE = "NONE";
 
     private static final List<String> KEYS = Arrays.stream(values()).map(ZiplineOption::getKey).toList();
@@ -104,7 +106,9 @@ public enum ZiplineOption {
         this.suggestions = suggestions;
     }
 
-    /** Returns the option with the given key, or {@code null} if there is no such option. */
+    /**
+     * Returns the option with the given key, or {@code null} if there is no such option.
+     */
     public static ZiplineOption fromKey(String key) {
         for (ZiplineOption option : values()) {
             if (option.key.equalsIgnoreCase(key)) {
@@ -122,17 +126,23 @@ public enum ZiplineOption {
         return key;
     }
 
-    /** Returns this option's current value, formatted so that {@link #write} accepts it back. */
+    /**
+     * Returns this option's current value, formatted so that {@link #write} accepts it back.
+     */
     public String read(ZiplineSettings settings) {
         return setting.read(settings);
     }
 
-    /** Applies {@code value}, returning {@code false} if it was not valid for this option. */
+    /**
+     * Applies {@code value}, returning {@code false} if it was not valid for this option.
+     */
     public boolean write(ZiplineSettings settings, String value) {
         return setting.write(settings, value);
     }
 
-    /** Copies this option's value from one settings object to another. */
+    /**
+     * Copies this option's value from one settings object to another.
+     */
     public void copy(ZiplineSettings from, ZiplineSettings to) {
         setting.copy(from, to);
     }

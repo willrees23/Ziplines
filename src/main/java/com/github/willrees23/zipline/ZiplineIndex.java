@@ -5,11 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * A spatial index of ziplines, bucketed by the chunks their line passes through.
@@ -20,7 +16,9 @@ import java.util.UUID;
  */
 public class ZiplineIndex {
 
-    /** Sampling interval along the line. Well under the 16 block chunk width, so none are missed. */
+    /**
+     * Sampling interval along the line. Well under the 16 block chunk width, so none are missed.
+     */
     private static final double CHUNK_SAMPLE_STEP = 2.0;
 
     private final Map<UUID, Map<Long, Set<Zipline>>> worlds = new HashMap<>();
@@ -97,7 +95,9 @@ public class ZiplineIndex {
         return keys;
     }
 
-    /** Packs chunk coordinates into one long, so the map needs no object key per chunk. */
+    /**
+     * Packs chunk coordinates into one long, so the map needs no object key per chunk.
+     */
     private long key(int chunkX, int chunkZ) {
         return ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
     }

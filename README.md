@@ -42,66 +42,66 @@ To ride, walk into either end of the line. Ziplines can be ridden in both direct
 
 The command is `/ziplines`, aliased to `/zipline` and `/zl`.
 
-| Command | Description |
-| --- | --- |
-| `/zl start <id> [speed]` | Start marking out a zipline from where you are stood. |
-| `/zl end` | Finish it where you are stood. |
-| `/zl cancel` | Abandon the one you are marking out. |
-| `/zl list` | List every zipline, with its world, length and settings. |
-| `/zl edit <id> <option> <value>` | Change one setting on an existing zipline. |
-| `/zl delete <id>` | Delete a zipline and restore the blocks its path replaced. |
+| Command                          | Description                                                |
+|----------------------------------|------------------------------------------------------------|
+| `/zl start <id> [speed]`         | Start marking out a zipline from where you are stood.      |
+| `/zl end`                        | Finish it where you are stood.                             |
+| `/zl cancel`                     | Abandon the one you are marking out.                       |
+| `/zl list`                       | List every zipline, with its world, length and settings.   |
+| `/zl edit <id> <option> <value>` | Change one setting on an existing zipline.                 |
+| `/zl delete <id>`                | Delete a zipline and restore the blocks its path replaced. |
 
 Ids may use letters, digits, hyphens and underscores, up to 32 characters.
 
 ## Permissions
 
-| Permission | Default | Description |
-| --- | --- | --- |
-| `ziplines.use` | everyone | Ride a zipline. |
-| `ziplines.start` | op | Begin marking out a zipline. |
-| `ziplines.end` | op | Finish marking out a zipline. |
-| `ziplines.edit` | op | Change the settings of an existing zipline. |
-| `ziplines.delete` | op | Delete a zipline. |
-| `ziplines.list` | op | List the ziplines on the server. |
-| `ziplines.admin` | op | All of the above. |
+| Permission        | Default  | Description                                 |
+|-------------------|----------|---------------------------------------------|
+| `ziplines.use`    | everyone | Ride a zipline.                             |
+| `ziplines.start`  | op       | Begin marking out a zipline.                |
+| `ziplines.end`    | op       | Finish marking out a zipline.               |
+| `ziplines.edit`   | op       | Change the settings of an existing zipline. |
+| `ziplines.delete` | op       | Delete a zipline.                           |
+| `ziplines.list`   | op       | List the ziplines on the server.            |
+| `ziplines.admin`  | op       | All of the above.                           |
 
 ## Settings
 
 Every setting below can be edited per zipline with `/zl edit`, and defaulted for new ziplines under
 `defaults` in `config.yml`. Tab completion offers the valid values for each one.
 
-| Option | Values | Description |
-| --- | --- | --- |
-| `speed` | 0.01 – 10 | Ride speed multiplier. 1.0 is about 8 blocks per second. |
-| `path-type` | `BLOCK`, `PARTICLE` | Whether the line is built from blocks or drawn with particles. |
-| `material` | any block | Block the line is built from. |
-| `path-particle` | any plain particle | Particle the line is drawn with. |
-| `endpoint-particle` | any plain particle | Particle circling each end of the line. |
-| `trigger` | `WALK`, `RIGHT_CLICK` | What a player does to board. |
-| `movement-mode` | `MOUNTED`, `VELOCITY` | Whether riders sit on a seat or are pushed along. |
-| `exit-mode` | `DROP`, `LAUNCH` | What happens at the far end. |
-| `launch-power` | 0 – 10 | Strength of the throw when `exit-mode` is `LAUNCH`. |
-| `ride-sound` | any sound, or `NONE` | Sound played while riding. |
-| `ride-sound-volume` | 0 – 2 | |
-| `ride-sound-interval` | 1 – 100 | Ticks between repeats of the ride sound. |
-| `ride-sound-pitch-start` | 0.5 – 2 | Pitch at the start of the ride. |
-| `ride-sound-pitch-end` | 0.5 – 2 | Pitch at the end, slid to across the ride. |
-| `end-sound` | any sound, or `NONE` | Sound played on reaching the end. |
-| `end-sound-volume` | 0 – 2 | |
-| `end-sound-pitch` | 0.5 – 2 | |
-| `seat` | `true`, `false` | Show a seat under the rider and at each end. |
-| `seat-material` | any block | Block the seat is made of. Slabs sit best. |
-| `seat-scale` | 0.05 – 2 | Size of the seat block. |
-| `seat-offset` | -2 – 2 | Nudge the seat up or down. |
-| `fall-damage` | `true`, `false` | Take fall damage from the drop at the end. |
-| `sneak-exit` | `true`, `false` | Let riders leave the line early by sneaking. |
+| Option                   | Values                | Description                                                    |
+|--------------------------|-----------------------|----------------------------------------------------------------|
+| `speed`                  | 0.01 – 10             | Ride speed multiplier. 1.0 is about 8 blocks per second.       |
+| `path-type`              | `BLOCK`, `PARTICLE`   | Whether the line is built from blocks or drawn with particles. |
+| `material`               | any block             | Block the line is built from.                                  |
+| `path-particle`          | any plain particle    | Particle the line is drawn with.                               |
+| `endpoint-particle`      | any plain particle    | Particle circling each end of the line.                        |
+| `trigger`                | `WALK`, `RIGHT_CLICK` | What a player does to board.                                   |
+| `movement-mode`          | `MOUNTED`, `VELOCITY` | Whether riders sit on a seat or are pushed along.              |
+| `exit-mode`              | `DROP`, `LAUNCH`      | What happens at the far end.                                   |
+| `launch-power`           | 0 – 10                | Strength of the throw when `exit-mode` is `LAUNCH`.            |
+| `ride-sound`             | any sound, or `NONE`  | Sound played while riding.                                     |
+| `ride-sound-volume`      | 0 – 2                 |                                                                |
+| `ride-sound-interval`    | 1 – 100               | Ticks between repeats of the ride sound.                       |
+| `ride-sound-pitch-start` | 0.5 – 2               | Pitch at the start of the ride.                                |
+| `ride-sound-pitch-end`   | 0.5 – 2               | Pitch at the end, slid to across the ride.                     |
+| `end-sound`              | any sound, or `NONE`  | Sound played on reaching the end.                              |
+| `end-sound-volume`       | 0 – 2                 |                                                                |
+| `end-sound-pitch`        | 0.5 – 2               |                                                                |
+| `seat`                   | `true`, `false`       | Show a seat under the rider and at each end.                   |
+| `seat-material`          | any block             | Block the seat is made of. Slabs sit best.                     |
+| `seat-scale`             | 0.05 – 2              | Size of the seat block.                                        |
+| `seat-offset`            | -2 – 2                | Nudge the seat up or down.                                     |
+| `fall-damage`            | `true`, `false`       | Take fall damage from the drop at the end.                     |
+| `sneak-exit`             | `true`, `false`       | Let riders leave the line early by sneaking.                   |
 
 Two further settings are server wide rather than per zipline:
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `trigger-radius` | 1.5 | How close to an endpoint a player has to be to board, in blocks. |
-| `max-length` | 256 | Longest zipline that may be built, in blocks. |
+| Option           | Default | Description                                                      |
+|------------------|---------|------------------------------------------------------------------|
+| `trigger-radius` | 1.5     | How close to an endpoint a player has to be to board, in blocks. |
+| `max-length`     | 256     | Longest zipline that may be built, in blocks.                    |
 
 Sounds are named the way Minecraft's own constants are, such as `BLOCK_NOTE_BLOCK_BASS`. Namespaced
 keys like `minecraft:block.note_block.bass` are accepted too.

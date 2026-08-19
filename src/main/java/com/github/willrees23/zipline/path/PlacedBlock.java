@@ -16,7 +16,9 @@ public record PlacedBlock(int x, int y, int z, String data) {
     private static final String SEPARATOR = ";";
     private static final int FIELDS = 4;
 
-    /** Parses a stored record, returning {@code null} if it is malformed. */
+    /**
+     * Parses a stored record, returning {@code null} if it is malformed.
+     */
     public static PlacedBlock parse(String value) {
         String[] parts = value.split(SEPARATOR, FIELDS);
         if (parts.length < FIELDS) {

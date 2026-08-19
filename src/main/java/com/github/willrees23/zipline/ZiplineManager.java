@@ -15,12 +15,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -29,7 +24,9 @@ import java.util.regex.Pattern;
  */
 public class ZiplineManager {
 
-    /** The shortest line worth building; below this the two endpoints overlap in practice. */
+    /**
+     * The shortest line worth building; below this the two endpoints overlap in practice.
+     */
     private static final double MIN_LENGTH = 2.0;
 
     /**
@@ -38,7 +35,9 @@ public class ZiplineManager {
      */
     private static final Pattern VALID_ID = Pattern.compile("[A-Za-z0-9_-]{1,32}");
 
-    /** Options that change how endpoint seats look, so the existing ones have to be respawned. */
+    /**
+     * Options that change how endpoint seats look, so the existing ones have to be respawned.
+     */
     private static final Set<ZiplineOption> SEAT_OPTIONS = Set.of(
             ZiplineOption.SEAT,
             ZiplineOption.SEAT_MATERIAL,
@@ -52,9 +51,13 @@ public class ZiplineManager {
     private final RideManager rides;
     private final SeatManager seats;
 
-    /** Finished ziplines, keyed by lower-cased id so that lookups are case insensitive. */
+    /**
+     * Finished ziplines, keyed by lower-cased id so that lookups are case insensitive.
+     */
     private final Map<String, Zipline> ziplines = new LinkedHashMap<>();
-    /** Ziplines between {@code /zl start} and {@code /zl end}, keyed by the player building them. */
+    /**
+     * Ziplines between {@code /zl start} and {@code /zl end}, keyed by the player building them.
+     */
     private final Map<UUID, Zipline> pending = new LinkedHashMap<>();
 
     private final PreviewTask preview;
@@ -188,7 +191,9 @@ public class ZiplineManager {
         ChatUtil.sendColored(player, "&aZipline creation cancelled.");
     }
 
-    /** Drops any half-built zipline, and stops the preview once nobody is building one. */
+    /**
+     * Drops any half-built zipline, and stops the preview once nobody is building one.
+     */
     public void discardCreation(Player player) {
         pending.remove(player.getUniqueId());
         if (pending.isEmpty()) {

@@ -18,18 +18,30 @@ import java.util.List;
 @UtilityClass
 public class PathGeometry {
 
-    /** How far above the marked endpoints the line of blocks is strung. */
+    /**
+     * How far above the marked endpoints the line of blocks is strung.
+     */
     public final int PATH_RISE = 2;
-    /** How far below the line a mounted rider hangs. */
+    /**
+     * How far below the line a mounted rider hangs.
+     */
     public final int MOUNT_DROP = 2;
-    /** How far below the line a rider travelling under their own velocity sits. */
+    /**
+     * How far below the line a rider travelling under their own velocity sits.
+     */
     public final int VELOCITY_DROP = 1;
-    /** How much room the seat entity needs beneath the rider. */
+    /**
+     * How much room the seat entity needs beneath the rider.
+     */
     public final int VEHICLE_DEPTH = 1;
-    /** Blocks that must be clear at and below each block of the line for a ride to fit through. */
+    /**
+     * Blocks that must be clear at and below each block of the line for a ride to fit through.
+     */
     public final int CLEARANCE_DEPTH = 1 + MOUNT_DROP + VEHICLE_DEPTH;
 
-    /** Returns points spaced {@code step} apart along the straight line between the endpoints. */
+    /**
+     * Returns points spaced {@code step} apart along the straight line between the endpoints.
+     */
     public List<Vector> samplePoints(Location start, Location end, double step) {
         List<Vector> points = new ArrayList<>();
         Vector origin = start.toVector();
@@ -104,7 +116,9 @@ public class PathGeometry {
         return blocks;
     }
 
-    /** Returns the block of the line strung above the given height. */
+    /**
+     * Returns the block of the line strung above the given height.
+     */
     public int pathBlockY(double lineY) {
         return (int) Math.floor(lineY) + PATH_RISE;
     }
@@ -113,12 +127,16 @@ public class PathGeometry {
         return lineY - VELOCITY_DROP;
     }
 
-    /** Inverse of {@link #velocityRideY}, for recovering the line from where a rider currently is. */
+    /**
+     * Inverse of {@link #velocityRideY}, for recovering the line from where a rider currently is.
+     */
     public double lineYFromRide(double rideY) {
         return rideY + VELOCITY_DROP;
     }
 
-    /** Ride height for a mounted rider, snapped to the block of the line above them. */
+    /**
+     * Ride height for a mounted rider, snapped to the block of the line above them.
+     */
     public double steppedRideY(double lineY) {
         return pathBlockY(lineY) - MOUNT_DROP;
     }

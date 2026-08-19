@@ -25,7 +25,9 @@ public class Zipline {
 
     private Location end;
 
-    /** Blocks the path replaced, in the order they were placed. Empty for path types that place none. */
+    /**
+     * Blocks the path replaced, in the order they were placed. Empty for path types that place none.
+     */
     @Setter
     private List<PlacedBlock> placedBlocks = List.of();
 
@@ -47,7 +49,9 @@ public class Zipline {
         this.profile = null;
     }
 
-    /** Returns the ride profile, building it on first use and again whenever the end point moves. */
+    /**
+     * Returns the ride profile, building it on first use and again whenever the end point moves.
+     */
     public PathProfile getProfile() {
         if (profile == null) {
             profile = new PathProfile(start, end);

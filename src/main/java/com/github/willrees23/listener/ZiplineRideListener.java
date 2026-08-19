@@ -11,7 +11,9 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 
-/** Protects riders and their seats from the things that would otherwise interrupt a ride. */
+/**
+ * Protects riders and their seats from the things that would otherwise interrupt a ride.
+ */
 public class ZiplineRideListener implements Listener {
 
     private final RideManager rides;
@@ -39,7 +41,9 @@ public class ZiplineRideListener implements Listener {
         }
     }
 
-    /** Stops players from interacting with a seat, which would otherwise let them break the ride. */
+    /**
+     * Stops players from interacting with a seat, which would otherwise let them break the ride.
+     */
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent event) {
         if (seats.isSeat(event.getRightClicked())) {

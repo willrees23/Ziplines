@@ -10,7 +10,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
-/** Watches for the two ways a player can board a zipline. */
+/**
+ * Watches for the two ways a player can board a zipline.
+ */
 public class ZiplineTriggerListener implements Listener {
 
     private final RideManager rides;

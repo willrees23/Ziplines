@@ -7,9 +7,13 @@ package com.github.willrees23.zipline.path;
  */
 public enum PathType {
 
-    /** Places real blocks along the line, remembering what they replaced. */
+    /**
+     * Places real blocks along the line, remembering what they replaced.
+     */
     BLOCK(new BlockPathRenderer()),
-    /** Draws the line with particles, leaving the world untouched. */
+    /**
+     * Draws the line with particles, leaving the world untouched.
+     */
     PARTICLE(new ParticlePathRenderer());
 
     private final PathRenderer renderer;

@@ -100,7 +100,9 @@ public class ZiplineStorage {
         }
     }
 
-    /** Reads the stored settings over a copy of the defaults, so new options pick up their default. */
+    /**
+     * Reads the stored settings over a copy of the defaults, so new options pick up their default.
+     */
     private ZiplineSettings readSettings(ConfigurationSection section, ZiplineSettings defaults) {
         ZiplineSettings settings = defaults.copy();
         ConfigurationSection stored = section.getConfigurationSection("settings");

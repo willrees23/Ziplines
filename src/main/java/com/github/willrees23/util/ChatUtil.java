@@ -11,9 +11,13 @@ import org.bukkit.command.CommandSender;
 @UtilityClass
 public class ChatUtil {
 
-    /** Colour applied to the surrounding prose when a message does not open with its own code. */
+    /**
+     * Colour applied to the surrounding prose when a message does not open with its own code.
+     */
     private final String BASE = "&7";
-    /** Colour applied to each substituted value. */
+    /**
+     * Colour applied to each substituted value.
+     */
     private final String HIGHLIGHT = "&e";
 
     private final String PLACEHOLDER = "%s";

@@ -14,7 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PathGeometryTest {
 
-    /** Locations are built without a world, which the geometry never looks at. */
+    /**
+     * Locations are built without a world, which the geometry never looks at.
+     */
     private static Location at(double x, double y, double z) {
         return new Location(null, x, y, z);
     }

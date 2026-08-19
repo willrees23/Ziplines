@@ -7,7 +7,9 @@ import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-/** The pair of entities carrying one rider along a line. */
+/**
+ * The pair of entities carrying one rider along a line.
+ */
 public class RideSeat {
 
     /**

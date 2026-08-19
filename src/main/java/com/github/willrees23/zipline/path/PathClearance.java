@@ -8,7 +8,9 @@ import org.bukkit.util.Vector;
 
 import java.util.List;
 
-/** Checks that a proposed line has room for a rider to pass beneath it. */
+/**
+ * Checks that a proposed line has room for a rider to pass beneath it.
+ */
 @UtilityClass
 public class PathClearance {
 

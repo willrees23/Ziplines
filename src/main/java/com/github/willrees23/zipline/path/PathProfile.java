@@ -40,7 +40,9 @@ public class PathProfile {
         return lowest - PathGeometry.MOUNT_DROP;
     }
 
-    /** Packs a block column into one long, so the map needs no object key per column. */
+    /**
+     * Packs a block column into one long, so the map needs no object key per column.
+     */
     private long key(int blockX, int blockZ) {
         return ((long) blockX << 32) ^ (blockZ & 0xffffffffL);
     }

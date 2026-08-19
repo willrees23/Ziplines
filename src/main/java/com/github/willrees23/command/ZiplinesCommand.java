@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Handles {@code /ziplines} and its aliases. */
+/**
+ * Handles {@code /ziplines} and its aliases.
+ */
 public class ZiplinesCommand implements TabExecutor {
 
     private static final String USAGE = "/ziplines <start|end|cancel|delete|edit|list>";
@@ -73,7 +75,9 @@ public class ZiplinesCommand implements TabExecutor {
         return true;
     }
 
-    /** The remaining sub-commands act on where the sender is stood, so they need a player. */
+    /**
+     * The remaining sub-commands act on where the sender is stood, so they need a player.
+     */
     private boolean runAsPlayer(CommandSender sender, String subCommand, String[] args) {
         if (!(sender instanceof Player player)) {
             ChatUtil.sendColored(sender, "&cOnly players can use this command.");
