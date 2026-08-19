@@ -1,0 +1,27 @@
+defaults:
+  speed: 1.0
+  path-type: BLOCK
+  material: OAK_FENCE
+  path-particle: CLOUD
+  endpoint-particle: END_ROD
+  trigger: WALK
+  movement-mode: MOUNTED
+  exit-mode: DROP
+  launch-power: 1.5
+  ride-sound: BLOCK_NOTE_BLOCK_BASS
+  ride-sound-volume: 0.5
+  ride-sound-interval: 2
+  ride-sound-pitch-start: 0.5
+  ride-sound-pitch-end: 2.0
+  end-sound: ENTITY_ENDER_DRAGON_FLAP
+  end-sound-volume: 1.0
+  end-sound-pitch: 1.0
+  seat: true
+  seat-material: OAK_SLAB
+  seat-scale: 0.8
+  seat-offset: 0.0
+  fall-damage: false
+  sneak-exit: false
+
+trigger-radius: 1.5
+max-length: 256
