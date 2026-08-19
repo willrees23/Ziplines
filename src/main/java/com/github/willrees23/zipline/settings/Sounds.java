@@ -37,7 +37,10 @@ final class Sounds {
     }
 
     static String name(Sound sound) {
-        NamespacedKey key = sound.getKeyOrThrow();
+        // Keyed#getKey rather than the newer getKeyOrThrow: the latter arrives through Spigot's
+        // RegistryAware, which Paper's Sound does not implement. Compiling against Spigot and running
+        // on Paper would then fail with NoSuchMethodError the first time a sound is named.
+        NamespacedKey key = sound.getKey();
         if (!MINECRAFT.equals(key.getNamespace())) {
             return key.toString();
         }
