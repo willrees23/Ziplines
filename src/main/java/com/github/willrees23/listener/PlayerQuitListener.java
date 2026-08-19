@@ -6,11 +6,20 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+/** Clears out anything a leaving player was in the middle of, so nothing is left holding their id. */
 public class PlayerQuitListener implements Listener {
+
+    private final ZiplineManager ziplines;
+    private final RideManager rides;
+
+    public PlayerQuitListener(ZiplineManager ziplines, RideManager rides) {
+        this.ziplines = ziplines;
+        this.rides = rides;
+    }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        ZiplineManager.getInstance().discardCreation(event.getPlayer());
-        RideManager.getInstance().forget(event.getPlayer());
+        ziplines.discardCreation(event.getPlayer());
+        rides.forget(event.getPlayer());
     }
 }

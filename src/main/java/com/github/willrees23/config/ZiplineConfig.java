@@ -1,20 +1,39 @@
 package com.github.willrees23.config;
 
-import com.github.willrees23.enums.ZiplineOption;
-import com.github.willrees23.zipline.ZiplineSettings;
+import com.github.willrees23.zipline.settings.ZiplineOption;
+import com.github.willrees23.zipline.settings.ZiplineSettings;
 import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-@Getter
+/** The contents of {@code config.yml}: the server-wide defaults for new ziplines. */
 public class ZiplineConfig {
 
-    private ZiplineSettings defaults = new ZiplineSettings();
-    private double triggerRadius = 1.5;
-    private int maxLength = 256;
+    private static final double DEFAULT_TRIGGER_RADIUS = 1.5;
+    private static final double MIN_TRIGGER_RADIUS = 0.5;
+    private static final int DEFAULT_MAX_LENGTH = 256;
+    private static final int MIN_MAX_LENGTH = 2;
 
-    public void load(JavaPlugin plugin) {
+    private final JavaPlugin plugin;
+
+    /** Settings a newly created zipline starts with. */
+    @Getter
+    private ZiplineSettings defaults = new ZiplineSettings();
+
+    /** How close to an endpoint a player has to be for the trigger to fire. */
+    @Getter
+    private double triggerRadius = DEFAULT_TRIGGER_RADIUS;
+
+    /** Longest zipline that may be built, which also bounds the work each path operation does. */
+    @Getter
+    private int maxLength = DEFAULT_MAX_LENGTH;
+
+    public ZiplineConfig(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public void load() {
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
         FileConfiguration config = plugin.getConfig();
@@ -24,13 +43,13 @@ public class ZiplineConfig {
         if (section != null) {
             for (ZiplineOption option : ZiplineOption.values()) {
                 String value = section.getString(option.getKey());
-                if (value != null && !defaults.set(option, value)) {
+                if (value != null && !option.write(defaults, value)) {
                     plugin.getLogger().warning("Invalid default for " + option.getKey() + ": " + value);
                 }
             }
         }
 
-        triggerRadius = Math.max(0.5, config.getDouble("trigger-radius", triggerRadius));
-        maxLength = Math.max(2, config.getInt("max-length", maxLength));
+        triggerRadius = Math.max(MIN_TRIGGER_RADIUS, config.getDouble("trigger-radius", DEFAULT_TRIGGER_RADIUS));
+        maxLength = Math.max(MIN_MAX_LENGTH, config.getInt("max-length", DEFAULT_MAX_LENGTH));
     }
 }

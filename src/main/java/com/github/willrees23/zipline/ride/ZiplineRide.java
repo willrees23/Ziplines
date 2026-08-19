@@ -1,10 +1,11 @@
 package com.github.willrees23.zipline.ride;
 
-import com.github.willrees23.enums.MovementMode;
 import com.github.willrees23.zipline.Zipline;
-import com.github.willrees23.zipline.ZiplineSettings;
 import com.github.willrees23.zipline.path.PathGeometry;
 import com.github.willrees23.zipline.seat.RideSeat;
+import com.github.willrees23.zipline.seat.SeatFactory;
+import com.github.willrees23.zipline.settings.MovementMode;
+import com.github.willrees23.zipline.settings.ZiplineSettings;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
@@ -14,10 +15,21 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+/**
+ * One player's trip along one zipline.
+ *
+ * <p>Rides work one of two ways. A mounted ride puts the player on a seat entity that is driven
+ * along the line, which is precise but visibly a vehicle. A velocity ride nudges the player towards
+ * the next point on the line each tick, which leaves them in control of their own body but drifts,
+ * so the correction is recomputed from their actual position every tick.
+ */
 @Getter
 public class ZiplineRide {
 
+    /** Correction is capped at this multiple of ride speed, so a knock does not fling the rider. */
     private static final double MAX_CORRECTION = 2.0;
+
+    /** Floor for that cap, so a slow zipline can still pull a displaced rider back to the line. */
     private static final double MIN_CORRECTION = 0.5;
 
     private final Player player;
@@ -35,19 +47,22 @@ public class ZiplineRide {
     private double travelled;
     private int ticks;
 
-    public ZiplineRide(Player player, Zipline zipline, Location from, Location to) {
+    public ZiplineRide(SeatFactory seats, Player player, Zipline zipline, Location from, Location to) {
         this.player = player;
         this.zipline = zipline;
         this.origin = from.toVector();
+
         Vector path = to.toVector().subtract(origin);
         this.length = path.length();
         this.direction = path.multiply(1 / this.length);
         this.yaw = (float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ()));
+
         this.seat = zipline.getSettings().getMovementMode() == MovementMode.MOUNTED
-                ? new RideSeat(player, zipline.getSettings(), ridePoint(0))
+                ? new RideSeat(seats, player, zipline.getSettings(), ridePoint(0))
                 : null;
     }
 
+    /** Advances the ride by one tick, returning {@code false} once it should end. */
     public boolean tick() {
         if (!player.isOnline() || !player.getWorld().equals(zipline.getStart().getWorld())) {
             return false;
@@ -73,6 +88,7 @@ public class ZiplineRide {
         }
     }
 
+    /** Distance travelled is tracked directly, since the seat goes exactly where it is told. */
     private boolean tickMounted() {
         if (!seat.isMounted(player)) {
             return false;
@@ -86,6 +102,10 @@ public class ZiplineRide {
         return travelled < length;
     }
 
+    /**
+     * Distance travelled is measured back from the player, by projecting them onto the line, because
+     * their real position lags the velocity they were given.
+     */
     private boolean tickVelocity() {
         double speed = zipline.getSettings().getBlocksPerTick();
         Vector position = player.getLocation().toVector();
@@ -109,6 +129,7 @@ public class ZiplineRide {
         return true;
     }
 
+    /** The point on the line at the given distance, dropped to ride height and turned to face along it. */
     private Location ridePoint(double distance) {
         Vector point = origin.clone().add(direction.clone().multiply(distance));
         return new Location(zipline.getStart().getWorld(),

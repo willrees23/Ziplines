@@ -1,19 +1,21 @@
 package com.github.willrees23.zipline.ride;
 
-import com.github.willrees23.ZiplinesPlugin;
-import com.github.willrees23.enums.ExitMode;
-import com.github.willrees23.enums.TriggerMode;
-import com.github.willrees23.enums.ZiplinePermission;
+import com.github.willrees23.ZiplinePermission;
+import com.github.willrees23.config.ZiplineConfig;
+import com.github.willrees23.task.RepeatingTask;
 import com.github.willrees23.zipline.Zipline;
-import com.github.willrees23.zipline.ZiplineManager;
-import com.github.willrees23.zipline.ZiplineSettings;
+import com.github.willrees23.zipline.ZiplineIndex;
+import com.github.willrees23.zipline.seat.SeatFactory;
+import com.github.willrees23.zipline.settings.ExitMode;
+import com.github.willrees23.zipline.settings.TriggerMode;
+import com.github.willrees23.zipline.settings.ZiplineSettings;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -23,47 +25,64 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-public class RideManager {
+/** Tracks who is currently riding, starts new rides, and cleans up when one ends. */
+public final class RideManager {
 
     private static final long RIDE_INTERVAL = 1L;
+
+    /** Keeps a player who has just been dropped at an endpoint from immediately boarding again. */
     private static final long TRIGGER_COOLDOWN_MILLIS = 1000L;
+
+    /** How long after a ride a player stays safe from fall damage caused by the drop. */
     private static final long FALL_GRACE_MILLIS = 10000L;
+
+    /** Fraction of ride speed carried into the drop, so riders do not stop dead at the end. */
     private static final double DROP_CARRY = 0.5;
+
+    /** Minimum upward share of a launch, so a launch off a level line still throws the rider up. */
     private static final double LAUNCH_LIFT = 0.35;
 
-    private static RideManager instance;
+    private final ZiplineConfig config;
+    private final ZiplineIndex index;
+    private final SeatFactory seats;
 
     private final Map<UUID, ZiplineRide> rides = new HashMap<>();
     private final Map<UUID, Long> triggerCooldowns = new HashMap<>();
     private final Map<UUID, Long> fallGrace = new HashMap<>();
 
-    private BukkitTask rideTask;
+    private final RepeatingTask task;
 
-    public static RideManager getInstance() {
-        if (instance == null) {
-            instance = new RideManager();
-        }
-        return instance;
+    public RideManager(Plugin plugin, ZiplineConfig config, ZiplineIndex index, SeatFactory seats) {
+        this.config = config;
+        this.index = index;
+        this.seats = seats;
+        this.task = new RepeatingTask(plugin, RIDE_INTERVAL, this::tickRides);
     }
 
     public boolean isRiding(Player player) {
         return rides.containsKey(player.getUniqueId());
     }
 
+    /**
+     * Starts a ride if the player is stood at the end of a zipline that uses the given trigger.
+     *
+     * <p>Both ends of every candidate are considered, and the nearest wins, so a line can be ridden
+     * in either direction.
+     */
     public void tryStart(Player player, TriggerMode mode) {
-        if (isRiding(player) || isOnCooldown(player) || !player.hasPermission(ZiplinePermission.ZIPLINE_USE.getPermission())) {
+        if (isRiding(player) || isOnCooldown(player)
+                || !player.hasPermission(ZiplinePermission.ZIPLINE_USE.getNode())) {
             return;
         }
 
-        double radius = ZiplineManager.getInstance().getConfiguration().getTriggerRadius();
+        double radius = config.getTriggerRadius();
         Location eyes = player.getEyeLocation();
-        Set<Zipline> candidates = ZiplineManager.getInstance().getIndex().nearby(eyes, radius);
 
         Zipline closest = null;
         Location from = null;
         Location to = null;
         double closestDistance = radius * radius;
-        for (Zipline zipline : candidates) {
+        for (Zipline zipline : index.nearby(eyes, radius)) {
             if (zipline.getSettings().getTrigger() != mode) {
                 continue;
             }
@@ -83,17 +102,22 @@ public class RideManager {
             }
         }
 
-        if (closest == null) {
-            return;
+        if (closest != null) {
+            start(player, closest, from, to);
         }
-        start(player, closest, from, to);
     }
 
     public void start(Player player, Zipline zipline, Location from, Location to) {
-        rides.put(player.getUniqueId(), new ZiplineRide(player, zipline, from, to));
-        startRideTask();
+        rides.put(player.getUniqueId(), new ZiplineRide(seats, player, zipline, from, to));
+        task.start();
     }
 
+    /**
+     * Ends a ride and releases the rider.
+     *
+     * @param completed whether the rider reached the far end, as opposed to bailing out or having
+     *                  the zipline taken out from under them
+     */
     public void stop(Player player, boolean completed) {
         ZiplineRide ride = rides.remove(player.getUniqueId());
         if (ride == null) {
@@ -113,7 +137,89 @@ public class RideManager {
             player.setFallDistance(0);
             playEndSound(player, ride.getZipline().getSettings());
         }
-        stopRideTask();
+        stopWhenIdle();
+    }
+
+    public void stopAll() {
+        for (UUID uuid : Set.copyOf(rides.keySet())) {
+            end(uuid, false);
+        }
+        stopWhenIdle();
+    }
+
+    public void stopRiders(Zipline zipline) {
+        for (UUID uuid : Set.copyOf(rides.keySet())) {
+            ZiplineRide ride = rides.get(uuid);
+            if (ride != null && ride.getZipline() == zipline) {
+                end(uuid, false);
+            }
+        }
+        stopWhenIdle();
+    }
+
+    public void handleSneak(Player player) {
+        ZiplineRide ride = rides.get(player.getUniqueId());
+        if (ride != null && ride.getZipline().getSettings().isSneakExit()) {
+            stop(player, false);
+        }
+    }
+
+    /**
+     * Decides what to do when a rider dismounts their seat.
+     *
+     * @return {@code true} if the dismount should be cancelled, which is how a rider is kept in
+     *         their seat on a zipline that does not allow bailing out
+     */
+    public boolean handleDismount(Player player, Entity vehicle) {
+        ZiplineRide ride = rides.get(player.getUniqueId());
+        if (ride == null || ride.isEnding() || !ride.isVehicle(vehicle)) {
+            return false;
+        }
+        if (!ride.getZipline().getSettings().isSneakExit()) {
+            return true;
+        }
+        stop(player, false);
+        return false;
+    }
+
+    /**
+     * Reports whether the player should be spared fall damage, consuming the grace period in the
+     * process so that only the landing from the ride is covered.
+     */
+    public boolean isFallProtected(Player player) {
+        if (isRiding(player)) {
+            return true;
+        }
+        Long expiry = fallGrace.remove(player.getUniqueId());
+        return expiry != null && expiry > System.currentTimeMillis();
+    }
+
+    /** Drops everything remembered about a player, for when they quit or die mid-ride. */
+    public void forget(Player player) {
+        end(player.getUniqueId(), true);
+        triggerCooldowns.remove(player.getUniqueId());
+        fallGrace.remove(player.getUniqueId());
+        stopWhenIdle();
+    }
+
+    /**
+     * Removes a ride and releases its seat entities, optionally without touching the player.
+     *
+     * @param quiet whether to skip the exit velocity and sound, used when the player is gone or the
+     *              ride is being torn down rather than finished
+     */
+    private void end(UUID uuid, boolean quiet) {
+        Player player = quiet ? null : Bukkit.getPlayer(uuid);
+        if (player != null) {
+            stop(player, false);
+            return;
+        }
+
+        ZiplineRide ride = rides.remove(uuid);
+        if (ride != null) {
+            ride.setEnding(true);
+            ride.releaseSeat();
+        }
     }
 
     private void playEndSound(Player player, ZiplineSettings settings) {
@@ -139,81 +245,6 @@ public class RideManager {
         return launch;
     }
 
-    public void stopAll() {
-        for (UUID uuid : Set.copyOf(rides.keySet())) {
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                stop(player, false);
-            } else {
-                discard(uuid);
-            }
-        }
-        stopRideTask();
-    }
-
-    public void stopRiders(Zipline zipline) {
-        for (UUID uuid : Set.copyOf(rides.keySet())) {
-            ZiplineRide ride = rides.get(uuid);
-            if (ride == null || ride.getZipline() != zipline) {
-                continue;
-            }
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                stop(player, false);
-            } else {
-                discard(uuid);
-            }
-        }
-    }
-
-    public void handleSneak(Player player) {
-        ZiplineRide ride = rides.get(player.getUniqueId());
-        if (ride == null || !ride.getZipline().getSettings().isSneakExit()) {
-            return;
-        }
-        stop(player, false);
-    }
-
-    public boolean handleDismount(Player player, Entity vehicle) {
-        ZiplineRide ride = rides.get(player.getUniqueId());
-        if (ride == null || ride.isEnding() || !ride.isVehicle(vehicle)) {
-            return false;
-        }
-        if (!ride.getZipline().getSettings().isSneakExit()) {
-            return true;
-        }
-        stop(player, false);
-        return false;
-    }
-
-    public boolean isFallProtected(Player player) {
-        if (isRiding(player)) {
-            return true;
-        }
-        Long expiry = fallGrace.get(player.getUniqueId());
-        if (expiry == null) {
-            return false;
-        }
-        fallGrace.remove(player.getUniqueId());
-        return expiry > System.currentTimeMillis();
-    }
-
-    public void forget(Player player) {
-        discard(player.getUniqueId());
-        triggerCooldowns.remove(player.getUniqueId());
-        fallGrace.remove(player.getUniqueId());
-        stopRideTask();
-    }
-
-    private void discard(UUID uuid) {
-        ZiplineRide ride = rides.remove(uuid);
-        if (ride == null) {
-            return;
-        }
-        ride.setEnding(true);
-        ride.releaseSeat();
-    }
-
     private boolean isOnCooldown(Player player) {
         Long expiry = triggerCooldowns.get(player.getUniqueId());
         if (expiry == null) {
@@ -226,19 +257,10 @@ public class RideManager {
         return false;
     }
 
-    private void startRideTask() {
-        if (rideTask != null) {
-            return;
+    private void stopWhenIdle() {
+        if (rides.isEmpty()) {
+            task.stop();
         }
-        rideTask = Bukkit.getScheduler().runTaskTimer(ZiplinesPlugin.getInstance(), this::tickRides, 0L, RIDE_INTERVAL);
-    }
-
-    private void stopRideTask() {
-        if (rideTask == null || !rides.isEmpty()) {
-            return;
-        }
-        rideTask.cancel();
-        rideTask = null;
     }
 
     private void tickRides() {

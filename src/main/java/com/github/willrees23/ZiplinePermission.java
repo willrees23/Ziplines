@@ -1,8 +1,6 @@
-package com.github.willrees23.enums;
+package com.github.willrees23;
 
-import lombok.Getter;
-
-@Getter
+/** The permission nodes declared in {@code plugin.yml}. */
 public enum ZiplinePermission {
 
     ZIPLINE_START("ziplines.start"),
@@ -12,9 +10,13 @@ public enum ZiplinePermission {
     ZIPLINE_USE("ziplines.use"),
     ZIPLINE_LIST("ziplines.list");
 
-    private final String permission;
+    private final String node;
 
-    ZiplinePermission(String permission) {
-        this.permission = permission;
+    ZiplinePermission(String node) {
+        this.node = node;
+    }
+
+    public String getNode() {
+        return node;
     }
 }

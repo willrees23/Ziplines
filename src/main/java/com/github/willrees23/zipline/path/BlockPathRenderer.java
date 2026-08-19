@@ -12,15 +12,14 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Draws the line as real blocks, remembering what it replaced so that the change can be undone. */
 public class BlockPathRenderer implements PathRenderer {
-
-    private static final String SEPARATOR = ";";
 
     @Override
     public int apply(Zipline zipline) {
         World world = zipline.getStart().getWorld();
         BlockData data = zipline.getSettings().getMaterial().createBlockData();
-        List<String> snapshot = new ArrayList<>();
+        List<PlacedBlock> snapshot = new ArrayList<>();
         int replaced = 0;
 
         for (Vector position : PathGeometry.pathBlocks(zipline.getStart(), zipline.getEnd())) {
@@ -31,7 +30,8 @@ public class BlockPathRenderer implements PathRenderer {
             if (block.getType() != Material.AIR) {
                 replaced++;
             }
-            snapshot.add(serialize(position, block.getBlockData().getAsString()));
+            snapshot.add(new PlacedBlock(position.getBlockX(), position.getBlockY(), position.getBlockZ(),
+                    block.getBlockData().getAsString()));
             block.setBlockData(data, true);
         }
 
@@ -46,27 +46,22 @@ public class BlockPathRenderer implements PathRenderer {
             return;
         }
 
-        List<String> snapshot = zipline.getPlacedBlocks();
+        // Restored back to front, so that a block placed over an earlier one is undone first.
+        List<PlacedBlock> snapshot = zipline.getPlacedBlocks();
         for (int index = snapshot.size() - 1; index >= 0; index--) {
-            String[] parts = snapshot.get(index).split(SEPARATOR, 4);
-            if (parts.length < 4) {
-                continue;
-            }
+            PlacedBlock placed = snapshot.get(index);
             try {
-                Block block = world.getBlockAt(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
-                block.setBlockData(Bukkit.createBlockData(parts[3]), true);
+                world.getBlockAt(placed.x(), placed.y(), placed.z())
+                        .setBlockData(Bukkit.createBlockData(placed.data()), true);
             } catch (IllegalArgumentException exception) {
-                continue;
+                // Block data from an older server version that no longer parses; leave it as it is.
             }
         }
-        zipline.setPlacedBlocks(new ArrayList<>());
+        zipline.setPlacedBlocks(List.of());
     }
 
     @Override
     public void tick(Zipline zipline, Player viewer) {
-    }
-
-    private String serialize(Vector position, String data) {
-        return position.getBlockX() + SEPARATOR + position.getBlockY() + SEPARATOR + position.getBlockZ() + SEPARATOR + data;
+        // Nothing to do: the blocks are already in the world.
     }
 }

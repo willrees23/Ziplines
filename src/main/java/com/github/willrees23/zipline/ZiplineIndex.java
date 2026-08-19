@@ -11,8 +11,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * A spatial index of ziplines, bucketed by the chunks their line passes through.
+ *
+ * <p>Both the trigger check and the effect task run every tick against every nearby player, so
+ * neither can afford to scan every zipline on the server. Lines are long and thin, so a zipline is
+ * filed under each chunk it crosses rather than only the chunks holding its endpoints.
+ */
 public class ZiplineIndex {
 
+    /** Sampling interval along the line. Well under the 16 block chunk width, so none are missed. */
     private static final double CHUNK_SAMPLE_STEP = 2.0;
 
     private final Map<UUID, Map<Long, Set<Zipline>>> worlds = new HashMap<>();
@@ -49,6 +57,12 @@ public class ZiplineIndex {
         }
     }
 
+    /**
+     * Returns the ziplines crossing any chunk within {@code radius} of {@code location}.
+     *
+     * <p>This is a coarse filter: results are within a chunk or so of the radius, not within the
+     * radius itself, so callers that need an exact distance still have to check it.
+     */
     public Set<Zipline> nearby(Location location, double radius) {
         Map<Long, Set<Zipline>> chunks = worlds.get(location.getWorld().getUID());
         if (chunks == null || chunks.isEmpty()) {
@@ -83,6 +97,7 @@ public class ZiplineIndex {
         return keys;
     }
 
+    /** Packs chunk coordinates into one long, so the map needs no object key per chunk. */
     private long key(int chunkX, int chunkZ) {
         return ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
     }

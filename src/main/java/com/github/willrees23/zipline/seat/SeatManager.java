@@ -11,17 +11,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Keeps a block display parked at each end of every zipline, so players can see where a line can be
+ * boarded.
+ *
+ * <p>These displays are not saved with the chunk, so they have to be respawned whenever the area is
+ * reloaded. {@link #refresh(Zipline)} is called from the effect task for nearby ziplines and is
+ * cheap when nothing needs doing.
+ */
 public class SeatManager {
 
-    private static SeatManager instance;
-
+    private final SeatFactory seats;
     private final Map<String, List<BlockDisplay>> endpoints = new HashMap<>();
 
-    public static SeatManager getInstance() {
-        if (instance == null) {
-            instance = new SeatManager();
-        }
-        return instance;
+    public SeatManager(SeatFactory seats) {
+        this.seats = seats;
     }
 
     public void refresh(Zipline zipline) {
@@ -46,8 +50,8 @@ public class SeatManager {
         }
 
         List<BlockDisplay> spawned = new ArrayList<>();
-        spawned.add(SeatEntities.spawnDisplay(start, zipline.getSettings()));
-        spawned.add(SeatEntities.spawnDisplay(end, zipline.getSettings()));
+        spawned.add(seats.spawnDisplay(start, zipline.getSettings()));
+        spawned.add(seats.spawnDisplay(end, zipline.getSettings()));
         endpoints.put(zipline.getId(), spawned);
     }
 
@@ -64,6 +68,7 @@ public class SeatManager {
         }
     }
 
+    /** Places the display at ride height, turned to face along the line. */
     private Location seatLocation(Zipline zipline, Location endpoint, Location facing) {
         Location location = endpoint.clone();
         location.setY(zipline.getProfile().rideHeight(endpoint.getX(), endpoint.getZ(), endpoint.getY()));

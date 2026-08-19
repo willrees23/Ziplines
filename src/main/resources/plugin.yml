@@ -1,30 +1,43 @@
-name: Ziplines
-description: Create ziplines in Minecraft
+name: ${project.name}
 version: ${project.version}
-api-version: 26.2
-main: com.github.willrees23.ZiplinesPlugin
+description: ${project.description}
+website: ${project.url}
 author: Will Rees
+main: com.github.willrees23.ZiplinesPlugin
+api-version: 26.2
+
 commands:
   ziplines:
-    description: Main command for the Ziplines plugin.
-    usage: /<command>
+    description: Create, edit and remove ziplines.
+    usage: /ziplines <start|end|cancel|delete|edit|list>
     aliases: [ zipline, zl ]
+
 permissions:
+  ziplines.use:
+    description: Ride a zipline.
+    default: true
   ziplines.start:
-    description: Allows starting a zipline.
+    description: Begin marking out a zipline.
     default: op
   ziplines.end:
-    description: Allows finishing a zipline.
+    description: Finish marking out a zipline.
     default: op
   ziplines.delete:
-    description: Allows deleting a zipline.
+    description: Delete a zipline and restore the blocks its path replaced.
     default: op
   ziplines.edit:
-    description: Allows editing a zipline.
+    description: Change the settings of an existing zipline.
     default: op
   ziplines.list:
-    description: Allows listing ziplines.
+    description: List the ziplines on the server.
     default: op
-  ziplines.use:
-    description: Allows riding a zipline.
-    default: true
+  ziplines.admin:
+    description: Full control over ziplines.
+    default: op
+    children:
+      ziplines.use: true
+      ziplines.start: true
+      ziplines.end: true
+      ziplines.delete: true
+      ziplines.edit: true
+      ziplines.list: true

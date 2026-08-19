@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+/** Draws the line with particles, leaving the world untouched. */
 public class ParticlePathRenderer implements PathRenderer {
 
     private static final double PARTICLE_STEP = 0.5;
@@ -17,6 +18,7 @@ public class ParticlePathRenderer implements PathRenderer {
 
     @Override
     public void remove(Zipline zipline) {
+        // Nothing was placed, so there is nothing to restore.
     }
 
     @Override
