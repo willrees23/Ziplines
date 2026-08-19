@@ -5,6 +5,7 @@ import com.github.willrees23.util.ChatUtil;
 import com.github.willrees23.zipline.effect.PreviewTask;
 import com.github.willrees23.zipline.path.PathClearance;
 import com.github.willrees23.zipline.path.PathGeometry;
+import com.github.willrees23.zipline.path.PathRenderer;
 import com.github.willrees23.zipline.path.PathType;
 import com.github.willrees23.zipline.ride.RideManager;
 import com.github.willrees23.zipline.seat.SeatManager;
@@ -84,11 +85,19 @@ public class ZiplineManager {
             ziplines.put(key(zipline.getId()), zipline);
             index.add(zipline);
         }
+
+        drawPaths();
+        // Saved as soon as the paths are up, so that the snapshots just taken survive a crash. A
+        // server that never reaches onDisable would otherwise leave blocks in the world with
+        // nothing on disk to record what they replaced.
+        save();
+
         plugin.getLogger().info("Loaded " + ziplines.size() + " ziplines.");
     }
 
     public void shutdown() {
         preview.stop();
+        clearPaths();
         save();
     }
 
@@ -271,6 +280,35 @@ public class ZiplineManager {
                     zipline.getSettings().getSpeed(),
                     zipline.getSettings().getPathType(),
                     zipline.getSettings().getTrigger());
+        }
+    }
+
+    /**
+     * Draws the path of every zipline that has one.
+     *
+     * <p>Paths go up on start-up and come down again on shutdown, so that the blocks only exist
+     * while the plugin that knows about them is running. A zipline removed from {@code ziplines.yml}
+     * while the server is down therefore leaves nothing behind in the world.
+     *
+     * <p>Each path is removed before it is drawn. After a clean shutdown that does nothing, since
+     * the snapshot was emptied on the way out. After a crash it puts back whatever the leftover
+     * blocks had replaced, so that the snapshot taken here still describes the untouched world
+     * rather than the plugin's own leavings.
+     */
+    private void drawPaths() {
+        for (Zipline zipline : ziplines.values()) {
+            PathRenderer renderer = zipline.getSettings().getPathType().getRenderer();
+            renderer.remove(zipline);
+            renderer.apply(zipline);
+        }
+    }
+
+    /**
+     * Takes down every path, putting back whatever each one replaced.
+     */
+    private void clearPaths() {
+        for (Zipline zipline : ziplines.values()) {
+            zipline.getSettings().getPathType().getRenderer().remove(zipline);
         }
     }
 

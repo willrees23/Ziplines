@@ -9,7 +9,8 @@ defaults:
   # Ride speed multiplier, from 0.01 to 10. 1.0 works out at about 8 blocks per second.
   speed: 1.0
 
-  # How the line is drawn: BLOCK places real blocks, PARTICLE draws it without touching the world.
+  # How the line is drawn: BLOCK places real blocks while the server is running, PARTICLE draws it
+  # without touching the world at all.
   path-type: BLOCK
   # Block used when path-type is BLOCK.
   material: OAK_FENCE

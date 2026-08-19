@@ -7,6 +7,8 @@ between them that players can board and ride across.
 - Riders travel on a seat, or under their own velocity if you would rather keep them in control.
 - Every line has its own speed, materials, sounds, trigger and exit behaviour, all editable in game.
 - Deleting a line puts back whatever blocks its path replaced.
+- Block paths live only while the server is up: they go in on start-up and come out again on
+  shutdown, so a line that disappears from `ziplines.yml` leaves nothing behind.
 
 ## Requirements
 
@@ -17,6 +19,12 @@ between them that players can board and ride across.
 
 Drop the jar into `plugins/` and restart the server. On first start the plugin writes
 `plugins/Ziplines/config.yml`; the ziplines themselves are stored alongside it in `ziplines.yml`.
+
+A zipline drawn from blocks is put into the world when the plugin starts and taken back out when it
+stops, so the world only holds a path while there is something there to ride along it. Alongside
+each zipline, `ziplines.yml` records what its path replaced, which is how those blocks are put back.
+If the server is killed rather than stopped, that record is used to tidy up on the next start
+instead, so nothing is left stranded.
 
 ## Building a zipline
 
