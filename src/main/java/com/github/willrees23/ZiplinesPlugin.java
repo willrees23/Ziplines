@@ -47,7 +47,7 @@ public class ZiplinesPlugin extends JavaPlugin {
         ZiplineIndex index = new ZiplineIndex();
         SeatFactory seatFactory = new SeatFactory(this);
 
-        seats = new SeatManager(seatFactory);
+        seats = new SeatManager(this, seatFactory);
         rides = new RideManager(this, config, index, seatFactory, seats);
         ziplines = new ZiplineManager(this, config, index, new ZiplineStorage(this), rides, seats);
         effects = new ZiplineEffectTask(this, index, seats);

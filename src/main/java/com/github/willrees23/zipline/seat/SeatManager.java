@@ -5,6 +5,7 @@ import com.github.willrees23.zipline.settings.RideDirection;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.BlockDisplay;
+import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 
@@ -14,7 +15,8 @@ import java.util.*;
  *
  * <p>A line that only one player may ride lends its display to that player's ride rather than
  * having a second seat spawned on top of it, so the seat they saw is the seat they leave on. It is
- * parked again by {@link #restore(Zipline)} once the ride is over.
+ * parked again by {@link #restore(Zipline)} once the ride is over, either straight away or, if the
+ * line asks for it, by making its own way back down the line first.
  *
  * <p>These displays are not saved with the chunk, so they have to be respawned whenever the area is
  * reloaded. {@link #refresh(Zipline)} is called from the effect task for nearby ziplines and is
@@ -22,11 +24,19 @@ import java.util.*;
  */
 public class SeatManager {
 
+    /**
+     * How far a display may sit from where it parks and still count as parked, squared. Only a
+     * display that has been carried off is worth sending back.
+     */
+    private static final double PARKED_TOLERANCE = 0.01;
+
     private final SeatFactory seats;
+    private final SeatReturnTask returns;
     private final Map<String, List<BlockDisplay>> endpoints = new HashMap<>();
 
-    public SeatManager(SeatFactory seats) {
+    public SeatManager(Plugin plugin, SeatFactory seats) {
         this.seats = seats;
+        this.returns = new SeatReturnTask(plugin);
     }
 
     public void refresh(Zipline zipline) {
@@ -40,6 +50,7 @@ public class SeatManager {
             if (isIntact(existing)) {
                 return;
             }
+            returns.forget(zipline);
             despawn(existing);
             endpoints.remove(zipline.getId());
         }
@@ -65,7 +76,7 @@ public class SeatManager {
      */
     public BlockDisplay lend(Zipline zipline, Location endpoint) {
         List<BlockDisplay> displays = endpoints.get(zipline.getId());
-        if (displays == null) {
+        if (displays == null || returns.isReturning(zipline)) {
             return null;
         }
 
@@ -83,6 +94,9 @@ public class SeatManager {
      * Parks every one of a zipline's displays where it belongs, which puts back the one a ride has
      * just carried off. A display that did not survive the ride is left to the next
      * {@link #refresh(Zipline)} to replace.
+     *
+     * <p>A line that asks its seats to make their own way back sets the carried one travelling
+     * instead, and cannot be boarded again until it arrives.
      */
     public void restore(Zipline zipline) {
         List<BlockDisplay> displays = endpoints.get(zipline.getId());
@@ -90,16 +104,33 @@ public class SeatManager {
             return;
         }
 
+        boolean travels = zipline.getSettings().returnsEndpointSeat();
+        List<Location> ends = boardableEnds(zipline);
         List<Location> locations = seatLocations(zipline);
         for (int i = 0; i < locations.size() && i < displays.size(); i++) {
             BlockDisplay display = displays.get(i);
-            if (display.isValid()) {
-                display.teleport(locations.get(i));
+            Location home = locations.get(i);
+            if (!display.isValid()) {
+                continue;
+            }
+            if (travels && hasLeft(display, home)) {
+                returns.start(zipline, display, opposite(zipline, ends.get(i)), ends.get(i), home);
+            } else {
+                display.teleport(home);
             }
         }
     }
 
+    /**
+     * Whether a zipline is waiting on a seat to come back down the line, which is as good as it
+     * being full: the one rider it takes cannot board until the seat is there to board.
+     */
+    public boolean isReturning(Zipline zipline) {
+        return returns.isReturning(zipline);
+    }
+
     public void remove(Zipline zipline) {
+        returns.forget(zipline);
         List<BlockDisplay> displays = endpoints.remove(zipline.getId());
         if (displays != null) {
             despawn(displays);
@@ -107,6 +138,7 @@ public class SeatManager {
     }
 
     public void removeAll() {
+        returns.forgetAll();
         for (String id : Set.copyOf(endpoints.keySet())) {
             despawn(endpoints.remove(id));
         }
@@ -138,6 +170,25 @@ public class SeatManager {
             locations.add(seatLocation(zipline, end, facing));
         }
         return locations;
+    }
+
+    /**
+     * The end of the line opposite the given one, which is where a seat lent out from it has to
+     * make its way back from.
+     */
+    private Location opposite(Zipline zipline, Location end) {
+        return end == zipline.getStart() ? zipline.getEnd() : zipline.getStart();
+    }
+
+    /**
+     * Whether a display has been carried away from where it parks, rather than sitting there
+     * untouched as the other end's display does throughout a ride.
+     */
+    private boolean hasLeft(BlockDisplay display, Location home) {
+        Location location = display.getLocation();
+        return location.getWorld() != null
+                && location.getWorld().equals(home.getWorld())
+                && location.distanceSquared(home) > PARKED_TOLERANCE;
     }
 
     /**

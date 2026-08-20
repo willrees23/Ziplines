@@ -119,4 +119,42 @@ class PathGeometryTest {
     void clearanceCoversTheWholeRide() {
         assertEquals(1 + PathGeometry.MOUNT_DROP + PathGeometry.VEHICLE_DEPTH, PathGeometry.CLEARANCE_DEPTH);
     }
+
+    @Test
+    @DisplayName("a point part way along the line reads back as that fraction of it")
+    void fractionAlongMeasuresProgress() {
+        Location from = at(0, 64, 0);
+        Location to = at(10, 64, 0);
+
+        assertEquals(0.0, PathGeometry.fractionAlong(from, to, at(0, 64, 0)));
+        assertEquals(0.25, PathGeometry.fractionAlong(from, to, at(2.5, 64, 0)));
+        assertEquals(1.0, PathGeometry.fractionAlong(from, to, at(10, 64, 0)));
+    }
+
+    @Test
+    @DisplayName("height is left out of the measurement, so a seat hanging below the line still counts")
+    void fractionAlongIgnoresHeight() {
+        Location from = at(0, 64, 0);
+        Location to = at(8, 80, 6);
+
+        assertEquals(0.5, PathGeometry.fractionAlong(from, to, at(4, 64, 3)));
+    }
+
+    @Test
+    @DisplayName("a point beyond either end counts as being at that end")
+    void fractionAlongIsClampedToTheLine() {
+        Location from = at(0, 64, 0);
+        Location to = at(10, 64, 0);
+
+        assertEquals(0.0, PathGeometry.fractionAlong(from, to, at(-5, 64, 0)));
+        assertEquals(1.0, PathGeometry.fractionAlong(from, to, at(25, 64, 0)));
+    }
+
+    @Test
+    @DisplayName("a line with no length reads as being at its start rather than dividing by zero")
+    void fractionAlongHandlesAPointLine() {
+        Location point = at(3, 64, 3);
+
+        assertEquals(0.0, PathGeometry.fractionAlong(point, point, at(9, 64, 9)));
+    }
 }

@@ -52,6 +52,11 @@ it at a time; anyone who walks up to a line that is already full is told so rath
 line set to a single rider hands them the seat parked at the end they board from and carries it
 along with them, so the seat they walked up to is the one they leave on.
 
+That seat is normally back at its end the moment the ride finishes. Set `seat-return` on the line
+and it has to make the journey instead, sliding back down the line at the line's own speed, and
+nobody can board until it gets there. Crossing a long line therefore keeps the next player waiting
+as long as the crossing itself took.
+
 ## Commands
 
 The command is `/ziplines`, aliased to `/zipline` and `/zl`.
@@ -109,6 +114,7 @@ Every setting below can be edited per zipline with `/zl edit`, and defaulted for
 | `seat-material`          | any block                              | Block the seat is made of. Slabs sit best.                     |
 | `seat-scale`             | 0.05 – 2                               | Size of the seat block.                                        |
 | `seat-offset`            | -2 – 2                                 | Nudge the seat up or down.                                     |
+| `seat-return`            | `true`, `false`                        | Make a carried seat travel back before the line can be ridden. |
 | `fall-damage`            | `true`, `false`                        | Take fall damage from the drop at the end.                     |
 | `sneak-exit`             | `true`, `false`                        | Let riders leave the line early by sneaking.                   |
 

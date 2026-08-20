@@ -59,6 +59,11 @@ defaults:
   seat-scale: 0.8
   # Nudge the seat up or down, from -2 to 2.
   seat-offset: 0.0
+  # Make a seat that has been carried off travel back down the line to the end it belongs to, at the
+  # line's own speed, instead of being put back the instant the ride ends. The line cannot be
+  # boarded again until it arrives. Only does anything on a line set to a single rider, since that
+  # is the only kind whose seat leaves its end.
+  seat-return: false
 
   # Take fall damage from the drop at the end of a ride.
   fall-damage: false

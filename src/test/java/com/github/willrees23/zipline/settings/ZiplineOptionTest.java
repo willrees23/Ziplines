@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,6 +48,13 @@ class ZiplineOptionTest {
     @DisplayName("an unknown key yields nothing rather than failing")
     void unknownKeysReturnNull() {
         assertNull(ZiplineOption.fromKey("nonsense"));
+    }
+
+    @Test
+    @DisplayName("the seat return is a flag, since a line either waits for its seat or does not")
+    void seatReturnIsAFlag() {
+        assertSame(ZiplineOption.SEAT_RETURN, ZiplineOption.fromKey("seat-return"));
+        assertEquals(List.of("true", "false"), ZiplineOption.SEAT_RETURN.getSuggestions());
     }
 
     @Test

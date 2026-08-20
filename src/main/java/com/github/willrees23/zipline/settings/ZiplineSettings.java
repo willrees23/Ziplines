@@ -48,6 +48,7 @@ public class ZiplineSettings {
     private Material seatMaterial = Material.OAK_SLAB;
     private double seatScale = 0.8;
     private double seatOffset = 0.0;
+    private boolean seatReturn = false;
     private boolean fallDamage = false;
     private boolean sneakExit = false;
 
@@ -69,6 +70,17 @@ public class ZiplineSettings {
      */
     public boolean carriesEndpointSeat() {
         return seat && maxRiders != null && maxRiders == 1 && movementMode == MovementMode.MOUNTED;
+    }
+
+    /**
+     * Whether a seat carried off down the line has to travel back to the end it belongs to, rather
+     * than being put back the moment the ride is over.
+     *
+     * <p>Only a line whose seat leaves its end in the first place has anything to bring back, so
+     * this follows {@link #carriesEndpointSeat()}.
+     */
+    public boolean returnsEndpointSeat() {
+        return seatReturn && carriesEndpointSeat();
     }
 
     /**
