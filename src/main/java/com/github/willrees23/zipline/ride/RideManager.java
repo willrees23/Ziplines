@@ -3,6 +3,7 @@ package com.github.willrees23.zipline.ride;
 import com.github.willrees23.ZiplinePermission;
 import com.github.willrees23.config.ZiplineConfig;
 import com.github.willrees23.task.RepeatingTask;
+import com.github.willrees23.util.ChatUtil;
 import com.github.willrees23.zipline.Zipline;
 import com.github.willrees23.zipline.ZiplineIndex;
 import com.github.willrees23.zipline.seat.SeatFactory;
@@ -39,6 +40,12 @@ public final class RideManager {
     private static final long FALL_GRACE_MILLIS = 10000L;
 
     /**
+     * How long a player turned away from a full line waits before being told again, so that milling
+     * about at a busy endpoint does not fill their chat.
+     */
+    private static final long FULL_NOTICE_MILLIS = 3000L;
+
+    /**
      * Fraction of ride speed carried into the drop, so riders do not stop dead at the end.
      */
     private static final double DROP_CARRY = 0.5;
@@ -55,6 +62,7 @@ public final class RideManager {
     private final Map<UUID, ZiplineRide> rides = new HashMap<>();
     private final Map<UUID, Long> triggerCooldowns = new HashMap<>();
     private final Map<UUID, Long> fallGrace = new HashMap<>();
+    private final Map<UUID, Long> fullNotices = new HashMap<>();
 
     private final RepeatingTask task;
 
@@ -74,7 +82,9 @@ public final class RideManager {
      *
      * <p>Every end a candidate can be boarded from is considered, and the nearest wins, so a line
      * is ridden in whichever direction the player walked up to it, unless its {@code direction}
-     * setting only allows one of them.
+     * setting only allows one of them. A line already carrying as many riders as its
+     * {@code max-riders} setting allows is passed over, so a player stood between two lines still
+     * boards the one with room.
      */
     public void tryStart(Player player, TriggerMode mode) {
         if (isRiding(player) || isOnCooldown(player)
@@ -86,6 +96,7 @@ public final class RideManager {
         Location eyes = player.getEyeLocation();
 
         Zipline closest = null;
+        Zipline full = null;
         Location from = null;
         Location to = null;
         double closestDistance = radius * radius;
@@ -93,29 +104,32 @@ public final class RideManager {
             if (zipline.getSettings().getTrigger() != mode) {
                 continue;
             }
+
             RideDirection direction = zipline.getSettings().getDirection();
-            if (direction.allowsStart()) {
-                double toStart = zipline.getStart().distanceSquared(eyes);
-                if (toStart < closestDistance) {
-                    closest = zipline;
-                    from = zipline.getStart();
-                    to = zipline.getEnd();
-                    closestDistance = toStart;
-                }
+            double toStart = direction.allowsStart() ? zipline.getStart().distanceSquared(eyes) : Double.MAX_VALUE;
+            double toEnd = direction.allowsEnd() ? zipline.getEnd().distanceSquared(eyes) : Double.MAX_VALUE;
+            double nearest = Math.min(toStart, toEnd);
+            if (nearest >= closestDistance) {
+                continue;
             }
-            if (direction.allowsEnd()) {
-                double toEnd = zipline.getEnd().distanceSquared(eyes);
-                if (toEnd < closestDistance) {
-                    closest = zipline;
-                    from = zipline.getEnd();
-                    to = zipline.getStart();
-                    closestDistance = toEnd;
-                }
+
+            if (isFull(zipline)) {
+                // Remembered rather than acted on, in case a line with room turns out to be nearer.
+                full = zipline;
+                continue;
             }
+
+            boolean fromStart = toStart <= toEnd;
+            closest = zipline;
+            from = fromStart ? zipline.getStart() : zipline.getEnd();
+            to = fromStart ? zipline.getEnd() : zipline.getStart();
+            closestDistance = nearest;
         }
 
         if (closest != null) {
             start(player, closest, from, to);
+        } else if (full != null) {
+            notifyFull(player, full);
         }
     }
 
@@ -213,6 +227,7 @@ public final class RideManager {
         end(player.getUniqueId(), true);
         triggerCooldowns.remove(player.getUniqueId());
         fallGrace.remove(player.getUniqueId());
+        fullNotices.remove(player.getUniqueId());
         stopWhenIdle();
     }
 
@@ -257,6 +272,42 @@ public final class RideManager {
         Vector launch = ride.getDirection().clone().multiply(settings.getBlocksPerTick() * settings.getLaunchPower());
         launch.setY(Math.max(launch.getY(), launch.length() * LAUNCH_LIFT));
         return launch;
+    }
+
+    /**
+     * Tells the player the line is full, at most once every {@link #FULL_NOTICE_MILLIS}, since the
+     * walk trigger fires again on every block they cross.
+     */
+    private void notifyFull(Player player, Zipline zipline) {
+        long now = System.currentTimeMillis();
+        Long expiry = fullNotices.get(player.getUniqueId());
+        if (expiry != null && expiry > now) {
+            return;
+        }
+        fullNotices.put(player.getUniqueId(), now + FULL_NOTICE_MILLIS);
+        ChatUtil.sendHighlighted(player, "&cZipline %s is full: it carries %s at a time.",
+                zipline.getId(), riders(zipline.getSettings().getMaxRiders()));
+    }
+
+    private String riders(int limit) {
+        return limit == 1 ? "one rider" : limit + " riders";
+    }
+
+    /**
+     * Whether the zipline is already carrying as many riders as it is allowed to.
+     */
+    private boolean isFull(Zipline zipline) {
+        return !zipline.getSettings().allowsRider(riderCount(zipline));
+    }
+
+    private int riderCount(Zipline zipline) {
+        int riding = 0;
+        for (ZiplineRide ride : rides.values()) {
+            if (ride.getZipline() == zipline) {
+                riding++;
+            }
+        }
+        return riding;
     }
 
     private boolean isOnCooldown(Player player) {
