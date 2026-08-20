@@ -32,6 +32,11 @@ defaults:
   # Strength of the throw when exit-mode is LAUNCH, from 0 to 10.
   launch-power: 1.5
 
+  # How many players may ride one line at once, from 1 to 100, or NONE for no limit. A line that is
+  # already carrying that many is passed over when a player tries to board, and they are told it is
+  # full.
+  max-riders: NONE
+
   # Sound played while riding, or NONE for silence. Pitch slides from start to end over the ride.
   ride-sound: BLOCK_NOTE_BLOCK_BASS
   ride-sound-volume: 0.5
