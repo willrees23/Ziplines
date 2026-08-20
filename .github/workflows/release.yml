@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: 'Release the current pom.xml version as-is, without bumping. Use once to cut the baseline tag.'
+        type: boolean
+        default: false
+
+# The version commit and the tag are both pushed back to main.
+permissions:
+  contents: write
+  pull-requests: read
+
+# Never cut two releases at once; a second run waits rather than racing the first.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Tags and full history are needed for the release notes diff.
+          fetch-depth: 0
+          # RELEASE_TOKEN is only required if main is branch-protected; without
+          # the secret this falls back to the built-in token.
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Decide whether to release, and at what level
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BOOTSTRAP: ${{ inputs.bootstrap }}
+        run: |
+          set -euo pipefail
+
+          if [ "${BOOTSTRAP:-false}" = "true" ]; then
+            echo "Bootstrap run: releasing the current pom.xml version unchanged."
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "level=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # A push to main may or may not have come from a merged pull request.
+          # Direct pushes carry no PR and are deliberately not released.
+          pr=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[0]')
+
+          if [ -z "$pr" ] || [ "$pr" = "null" ]; then
+            echo "No pull request is associated with this commit; skipping the release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          labels=$(jq -r '.labels[].name' <<< "$pr")
+          echo "Merged #$(jq -r '.number' <<< "$pr"), labels: ${labels:-<none>}"
+
+          if grep -qx 'no-release' <<< "$labels"; then
+            echo "The no-release label is set; skipping the release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # An unlabelled pull request is treated as a patch.
+          if   grep -qx 'major' <<< "$labels"; then level=major
+          elif grep -qx 'minor' <<< "$labels"; then level=minor
+          else                                     level=patch
+          fi
+
+          echo "Bump level: $level"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "level=$level" >> "$GITHUB_OUTPUT"
+
+      - name: Work out the new version
+        id: version
+        if: steps.decide.outputs.release == 'true'
+        run: |
+          set -euo pipefail
+
+          current=$(mvn --batch-mode --no-transfer-progress help:evaluate \
+                      -Dexpression=project.version -q -DforceStdout)
+          current=${current%-SNAPSHOT}
+          echo "Current version: $current"
+
+          IFS=. read -r major minor patch <<< "$current"
+
+          case "${{ steps.decide.outputs.level }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+            none)  ;;  # bootstrap: release the current version untouched
+          esac
+
+          next="${major}.${minor}.${patch}"
+          echo "New version: $next"
+
+          if git rev-parse -q --verify "refs/tags/v${next}" >/dev/null; then
+            echo "::error::Tag v${next} already exists."
+            exit 1
+          fi
+
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Set the version in the POM
+        if: steps.decide.outputs.release == 'true' && steps.decide.outputs.level != 'none'
+        run: |
+          mvn --batch-mode --no-transfer-progress versions:set \
+            -DnewVersion="${{ steps.version.outputs.version }}" \
+            -DgenerateBackupPoms=false
+
+      # A failure here means no commit, no tag and no release.
+      - name: Build and test
+        if: steps.decide.outputs.release == 'true'
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Commit the version, and tag it
+        if: steps.decide.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # The bootstrap run leaves the POM untouched, so there is nothing to commit.
+          if ! git diff --quiet -- pom.xml; then
+            git add pom.xml
+            # [skip ci] stops this commit from re-triggering the workflows on main.
+            git commit -m "chore(release): ${VERSION} [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+          git tag -a "v${VERSION}" -m "Ziplines v${VERSION}"
+          git push origin "v${VERSION}"
+
+      - name: Publish the release
+        if: steps.decide.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          jar="target/Ziplines-${VERSION}.jar"
+          [ -f "$jar" ] || { echo "::error::$jar was not built."; exit 1; }
+
+          gh release create "v${VERSION}" "$jar" \
+            --title "Ziplines v${VERSION}" \
+            --generate-notes
