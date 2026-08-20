@@ -44,7 +44,8 @@ The line is checked for clearance before it is built: it needs four blocks of op
 along its whole length, so that a rider and their seat fit through. If something is in the way, the
 plugin reports where.
 
-To ride, walk into either end of the line. Ziplines can be ridden in both directions.
+To ride, walk into either end of the line. Ziplines can be ridden in both directions, or set
+`direction` on one to have it board from a single end only.
 
 ## Commands
 
@@ -78,31 +79,32 @@ Ids may use letters, digits, hyphens and underscores, up to 32 characters.
 Every setting below can be edited per zipline with `/zl edit`, and defaulted for new ziplines under
 `defaults` in `config.yml`. Tab completion offers the valid values for each one.
 
-| Option                   | Values                | Description                                                    |
-|--------------------------|-----------------------|----------------------------------------------------------------|
-| `speed`                  | 0.01 – 10             | Ride speed multiplier. 1.0 is about 8 blocks per second.       |
-| `path-type`              | `BLOCK`, `PARTICLE`   | Whether the line is built from blocks or drawn with particles. |
-| `material`               | any block             | Block the line is built from.                                  |
-| `path-particle`          | any plain particle    | Particle the line is drawn with.                               |
-| `endpoint-particle`      | any plain particle    | Particle circling each end of the line.                        |
-| `trigger`                | `WALK`, `RIGHT_CLICK` | What a player does to board.                                   |
-| `movement-mode`          | `MOUNTED`, `VELOCITY` | Whether riders sit on a seat or are pushed along.              |
-| `exit-mode`              | `DROP`, `LAUNCH`      | What happens at the far end.                                   |
-| `launch-power`           | 0 – 10                | Strength of the throw when `exit-mode` is `LAUNCH`.            |
-| `ride-sound`             | any sound, or `NONE`  | Sound played while riding.                                     |
-| `ride-sound-volume`      | 0 – 2                 |                                                                |
-| `ride-sound-interval`    | 1 – 100               | Ticks between repeats of the ride sound.                       |
-| `ride-sound-pitch-start` | 0.5 – 2               | Pitch at the start of the ride.                                |
-| `ride-sound-pitch-end`   | 0.5 – 2               | Pitch at the end, slid to across the ride.                     |
-| `end-sound`              | any sound, or `NONE`  | Sound played on reaching the end.                              |
-| `end-sound-volume`       | 0 – 2                 |                                                                |
-| `end-sound-pitch`        | 0.5 – 2               |                                                                |
-| `seat`                   | `true`, `false`       | Show a seat under the rider and at each end.                   |
-| `seat-material`          | any block             | Block the seat is made of. Slabs sit best.                     |
-| `seat-scale`             | 0.05 – 2              | Size of the seat block.                                        |
-| `seat-offset`            | -2 – 2                | Nudge the seat up or down.                                     |
-| `fall-damage`            | `true`, `false`       | Take fall damage from the drop at the end.                     |
-| `sneak-exit`             | `true`, `false`       | Let riders leave the line early by sneaking.                   |
+| Option                   | Values                                 | Description                                                    |
+|--------------------------|----------------------------------------|----------------------------------------------------------------|
+| `speed`                  | 0.01 – 10                              | Ride speed multiplier. 1.0 is about 8 blocks per second.       |
+| `path-type`              | `BLOCK`, `PARTICLE`                    | Whether the line is built from blocks or drawn with particles. |
+| `material`               | any block                              | Block the line is built from.                                  |
+| `path-particle`          | any plain particle                     | Particle the line is drawn with.                               |
+| `endpoint-particle`      | any plain particle                     | Particle circling each end that can be boarded.                |
+| `trigger`                | `WALK`, `RIGHT_CLICK`                  | What a player does to board.                                   |
+| `direction`              | `BOTH`, `START_TO_END`, `END_TO_START` | Which ends the line can be boarded from.                       |
+| `movement-mode`          | `MOUNTED`, `VELOCITY`                  | Whether riders sit on a seat or are pushed along.              |
+| `exit-mode`              | `DROP`, `LAUNCH`                       | What happens at the far end.                                   |
+| `launch-power`           | 0 – 10                                 | Strength of the throw when `exit-mode` is `LAUNCH`.            |
+| `ride-sound`             | any sound, or `NONE`                   | Sound played while riding.                                     |
+| `ride-sound-volume`      | 0 – 2                                  |                                                                |
+| `ride-sound-interval`    | 1 – 100                                | Ticks between repeats of the ride sound.                       |
+| `ride-sound-pitch-start` | 0.5 – 2                                | Pitch at the start of the ride.                                |
+| `ride-sound-pitch-end`   | 0.5 – 2                                | Pitch at the end, slid to across the ride.                     |
+| `end-sound`              | any sound, or `NONE`                   | Sound played on reaching the end.                              |
+| `end-sound-volume`       | 0 – 2                                  |                                                                |
+| `end-sound-pitch`        | 0.5 – 2                                |                                                                |
+| `seat`                   | `true`, `false`                        | Show a seat under the rider and at each boardable end.         |
+| `seat-material`          | any block                              | Block the seat is made of. Slabs sit best.                     |
+| `seat-scale`             | 0.05 – 2                               | Size of the seat block.                                        |
+| `seat-offset`            | -2 – 2                                 | Nudge the seat up or down.                                     |
+| `fall-damage`            | `true`, `false`                        | Take fall damage from the drop at the end.                     |
+| `sneak-exit`             | `true`, `false`                        | Let riders leave the line early by sneaking.                   |
 
 Two further settings are server wide rather than per zipline:
 
