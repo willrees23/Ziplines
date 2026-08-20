@@ -47,6 +47,9 @@ plugin reports where.
 To ride, walk into either end of the line. Ziplines can be ridden in both directions, or set
 `direction` on one to have it board from a single end only.
 
+Any number of players can share a line by default. Set `max-riders` on one to let only so many ride
+it at a time; anyone who walks up to a line that is already full is told so rather than boarded.
+
 ## Commands
 
 The command is `/ziplines`, aliased to `/zipline` and `/zl`.
@@ -91,6 +94,7 @@ Every setting below can be edited per zipline with `/zl edit`, and defaulted for
 | `movement-mode`          | `MOUNTED`, `VELOCITY`                  | Whether riders sit on a seat or are pushed along.              |
 | `exit-mode`              | `DROP`, `LAUNCH`                       | What happens at the far end.                                   |
 | `launch-power`           | 0 – 10                                 | Strength of the throw when `exit-mode` is `LAUNCH`.            |
+| `max-riders`             | 1 – 100, or `NONE`                     | How many players may ride the line at once.                    |
 | `ride-sound`             | any sound, or `NONE`                   | Sound played while riding.                                     |
 | `ride-sound-volume`      | 0 – 2                                  |                                                                |
 | `ride-sound-interval`    | 1 – 100                                | Ticks between repeats of the ride sound.                       |
