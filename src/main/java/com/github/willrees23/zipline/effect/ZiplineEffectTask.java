@@ -4,6 +4,7 @@ import com.github.willrees23.task.RepeatingTask;
 import com.github.willrees23.zipline.Zipline;
 import com.github.willrees23.zipline.ZiplineIndex;
 import com.github.willrees23.zipline.seat.SeatManager;
+import com.github.willrees23.zipline.settings.RideDirection;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -15,6 +16,9 @@ import java.util.Set;
 /**
  * Keeps nearby ziplines looking alive: respawns their endpoint seats, lets particle paths draw
  * themselves, and spins a ring of particles around each endpoint.
+ *
+ * <p>Only the ends a line can be boarded from are ringed, so a one way line shows a player which
+ * way it runs.
  *
  * <p>Work is driven from the players outwards rather than over every zipline, so a server with many
  * ziplines only pays for the ones somebody can actually see.
@@ -54,15 +58,20 @@ public final class ZiplineEffectTask {
             for (Zipline zipline : nearby) {
                 seats.refresh(zipline);
                 zipline.getSettings().getPathType().getRenderer().tick(zipline, player);
-                drawEndpoint(player, zipline, zipline.getStart());
-                drawEndpoint(player, zipline, zipline.getEnd());
+                RideDirection direction = zipline.getSettings().getDirection();
+                if (direction.allowsStart()) {
+                    drawEndpoint(player, zipline, zipline.getStart());
+                }
+                if (direction.allowsEnd()) {
+                    drawEndpoint(player, zipline, zipline.getEnd());
+                }
             }
         }
     }
 
     /**
-     * Draws a slowly rotating ring around an endpoint. The index only narrows candidates down to a
-     * chunk, so the distance is checked again here.
+     * Draws a slowly rotating ring around an endpoint that can be boarded. The index only narrows
+     * candidates down to a chunk, so the distance is checked again here.
      */
     private void drawEndpoint(Player player, Zipline zipline, Location endpoint) {
         if (endpoint.distanceSquared(player.getLocation()) > RADIUS * RADIUS) {

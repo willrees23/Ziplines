@@ -31,6 +31,7 @@ public class ZiplineSettings {
     private Particle pathParticle = Particle.CLOUD;
     private Particle endpointParticle = Particle.END_ROD;
     private TriggerMode trigger = TriggerMode.WALK;
+    private RideDirection direction = RideDirection.BOTH;
     private MovementMode movementMode = MovementMode.MOUNTED;
     private ExitMode exitMode = ExitMode.DROP;
     private double launchPower = 1.5;

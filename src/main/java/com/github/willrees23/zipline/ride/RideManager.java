@@ -7,6 +7,7 @@ import com.github.willrees23.zipline.Zipline;
 import com.github.willrees23.zipline.ZiplineIndex;
 import com.github.willrees23.zipline.seat.SeatFactory;
 import com.github.willrees23.zipline.settings.ExitMode;
+import com.github.willrees23.zipline.settings.RideDirection;
 import com.github.willrees23.zipline.settings.TriggerMode;
 import com.github.willrees23.zipline.settings.ZiplineSettings;
 import org.bukkit.Bukkit;
@@ -71,8 +72,9 @@ public final class RideManager {
     /**
      * Starts a ride if the player is stood at the end of a zipline that uses the given trigger.
      *
-     * <p>Both ends of every candidate are considered, and the nearest wins, so a line can be ridden
-     * in either direction.
+     * <p>Every end a candidate can be boarded from is considered, and the nearest wins, so a line
+     * is ridden in whichever direction the player walked up to it, unless its {@code direction}
+     * setting only allows one of them.
      */
     public void tryStart(Player player, TriggerMode mode) {
         if (isRiding(player) || isOnCooldown(player)
@@ -91,19 +93,24 @@ public final class RideManager {
             if (zipline.getSettings().getTrigger() != mode) {
                 continue;
             }
-            double toStart = zipline.getStart().distanceSquared(eyes);
-            if (toStart < closestDistance) {
-                closest = zipline;
-                from = zipline.getStart();
-                to = zipline.getEnd();
-                closestDistance = toStart;
+            RideDirection direction = zipline.getSettings().getDirection();
+            if (direction.allowsStart()) {
+                double toStart = zipline.getStart().distanceSquared(eyes);
+                if (toStart < closestDistance) {
+                    closest = zipline;
+                    from = zipline.getStart();
+                    to = zipline.getEnd();
+                    closestDistance = toStart;
+                }
             }
-            double toEnd = zipline.getEnd().distanceSquared(eyes);
-            if (toEnd < closestDistance) {
-                closest = zipline;
-                from = zipline.getEnd();
-                to = zipline.getStart();
-                closestDistance = toEnd;
+            if (direction.allowsEnd()) {
+                double toEnd = zipline.getEnd().distanceSquared(eyes);
+                if (toEnd < closestDistance) {
+                    closest = zipline;
+                    from = zipline.getEnd();
+                    to = zipline.getStart();
+                    closestDistance = toEnd;
+                }
             }
         }
 
