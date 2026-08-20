@@ -35,6 +35,7 @@ public class ZiplineSettings {
     private MovementMode movementMode = MovementMode.MOUNTED;
     private ExitMode exitMode = ExitMode.DROP;
     private double launchPower = 1.5;
+    private Integer maxRiders = null;
     private Sound rideSound = Sound.BLOCK_NOTE_BLOCK_BASS;
     private double rideSoundVolume = 0.5;
     private int rideSoundInterval = 2;
@@ -49,6 +50,15 @@ public class ZiplineSettings {
     private double seatOffset = 0.0;
     private boolean fallDamage = false;
     private boolean sneakExit = false;
+
+    /**
+     * Whether one more player may board while {@code riding} of them are already on the line.
+     *
+     * <p>An unset limit lets on as many riders as care to board.
+     */
+    public boolean allowsRider(int riding) {
+        return maxRiders == null || riding < maxRiders;
+    }
 
     /**
      * Converts the player-facing speed into the distance covered per server tick.
