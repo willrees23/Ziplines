@@ -1,6 +1,7 @@
 package com.github.willrees23.zipline.seat;
 
 import com.github.willrees23.zipline.settings.ZiplineSettings;
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.BlockDisplay;
@@ -9,6 +10,10 @@ import org.bukkit.entity.Player;
 
 /**
  * The pair of entities carrying one rider along a line.
+ *
+ * <p>The visible half is normally spawned for the ride and removed with it. A line that only one
+ * player may ride instead lends the seat parked at the end being boarded from, which is carried
+ * along and handed back afterwards rather than removed.
  */
 public class RideSeat {
 
@@ -22,11 +27,31 @@ public class RideSeat {
     private final BlockDisplay display;
     private final Entity seat;
 
+    /**
+     * Whether the display belongs to the zipline's endpoint rather than to this ride, and so is
+     * given back at the end instead of removed.
+     */
+    @Getter
+    private final boolean borrowed;
+
     private double mountOffset;
 
-    public RideSeat(SeatFactory seats, Player player, ZiplineSettings settings, Location start) {
+    /**
+     * @param endpointSeat the display parked at the end being boarded from, to carry along the line
+     *                     instead of spawning one, or {@code null} to spawn one as usual
+     */
+    public RideSeat(SeatFactory seats,
+                    Player player,
+                    ZiplineSettings settings,
+                    Location start,
+                    BlockDisplay endpointSeat) {
         this.vehicle = seats.spawnVehicle(start);
-        this.display = settings.isSeat() ? seats.spawnDisplay(start, settings) : null;
+        this.borrowed = endpointSeat != null && endpointSeat.isValid();
+        if (borrowed) {
+            this.display = endpointSeat;
+        } else {
+            this.display = settings.isSeat() ? seats.spawnDisplay(start, settings) : null;
+        }
 
         if (display == null) {
             this.seat = vehicle;
@@ -70,7 +95,11 @@ public class RideSeat {
     public void release(Player player) {
         seat.removePassenger(player);
         if (display != null) {
-            display.remove();
+            if (borrowed) {
+                vehicle.removePassenger(display);
+            } else {
+                display.remove();
+            }
         }
         vehicle.remove();
     }

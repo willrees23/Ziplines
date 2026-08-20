@@ -12,6 +12,10 @@ import java.util.*;
  * Keeps a block display parked at every end a zipline can be boarded from, so players can see where
  * to get on. A one way line therefore shows a seat at one end only.
  *
+ * <p>A line that only one player may ride lends its display to that player's ride rather than
+ * having a second seat spawned on top of it, so the seat they saw is the seat they leave on. It is
+ * parked again by {@link #restore(Zipline)} once the ride is over.
+ *
  * <p>These displays are not saved with the chunk, so they have to be respawned whenever the area is
  * reloaded. {@link #refresh(Zipline)} is called from the effect task for nearby ziplines and is
  * cheap when nothing needs doing.
@@ -54,6 +58,47 @@ public class SeatManager {
         endpoints.put(zipline.getId(), spawned);
     }
 
+    /**
+     * Lends out the display parked at {@code endpoint}, for a ride to carry along the line.
+     *
+     * @return the display to carry, or {@code null} if there is none parked there to lend
+     */
+    public BlockDisplay lend(Zipline zipline, Location endpoint) {
+        List<BlockDisplay> displays = endpoints.get(zipline.getId());
+        if (displays == null) {
+            return null;
+        }
+
+        List<Location> ends = boardableEnds(zipline);
+        for (int i = 0; i < ends.size() && i < displays.size(); i++) {
+            BlockDisplay display = displays.get(i);
+            if (ends.get(i).equals(endpoint) && display.isValid()) {
+                return display;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parks every one of a zipline's displays where it belongs, which puts back the one a ride has
+     * just carried off. A display that did not survive the ride is left to the next
+     * {@link #refresh(Zipline)} to replace.
+     */
+    public void restore(Zipline zipline) {
+        List<BlockDisplay> displays = endpoints.get(zipline.getId());
+        if (displays == null) {
+            return;
+        }
+
+        List<Location> locations = seatLocations(zipline);
+        for (int i = 0; i < locations.size() && i < displays.size(); i++) {
+            BlockDisplay display = displays.get(i);
+            if (display.isValid()) {
+                display.teleport(locations.get(i));
+            }
+        }
+    }
+
     public void remove(Zipline zipline) {
         List<BlockDisplay> displays = endpoints.remove(zipline.getId());
         if (displays != null) {
@@ -68,16 +113,29 @@ public class SeatManager {
     }
 
     /**
+     * Returns the ends a rider may board this zipline from. Displays are held in this same order,
+     * so an index into one list means the same end in the other.
+     */
+    private List<Location> boardableEnds(Zipline zipline) {
+        RideDirection direction = zipline.getSettings().getDirection();
+        List<Location> ends = new ArrayList<>(2);
+        if (direction.allowsStart()) {
+            ends.add(zipline.getStart());
+        }
+        if (direction.allowsEnd()) {
+            ends.add(zipline.getEnd());
+        }
+        return ends;
+    }
+
+    /**
      * Returns where this zipline wants its displays: one for each end a rider may board from.
      */
     private List<Location> seatLocations(Zipline zipline) {
-        RideDirection direction = zipline.getSettings().getDirection();
         List<Location> locations = new ArrayList<>(2);
-        if (direction.allowsStart()) {
-            locations.add(seatLocation(zipline, zipline.getStart(), zipline.getEnd()));
-        }
-        if (direction.allowsEnd()) {
-            locations.add(seatLocation(zipline, zipline.getEnd(), zipline.getStart()));
+        for (Location end : boardableEnds(zipline)) {
+            Location facing = end == zipline.getStart() ? zipline.getEnd() : zipline.getStart();
+            locations.add(seatLocation(zipline, end, facing));
         }
         return locations;
     }

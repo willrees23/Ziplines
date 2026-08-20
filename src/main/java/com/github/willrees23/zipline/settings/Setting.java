@@ -51,10 +51,17 @@ final class Setting<T> {
                                   int maximum,
                                   Function<ZiplineSettings, Integer> reader,
                                   BiConsumer<ZiplineSettings, Integer> writer) {
-        return new Setting<>(raw -> {
-            Integer parsed = parseInt(raw);
-            return parsed != null && parsed >= minimum && parsed <= maximum ? parsed : null;
-        }, String::valueOf, reader, writer, false);
+        return new Setting<>(range(minimum, maximum), String::valueOf, reader, writer, false);
+    }
+
+    /**
+     * Accepts a whole number in range, or {@code NONE} for no limit at all.
+     */
+    static Setting<Integer> limit(int minimum,
+                                  int maximum,
+                                  Function<ZiplineSettings, Integer> reader,
+                                  BiConsumer<ZiplineSettings, Integer> writer) {
+        return new Setting<>(range(minimum, maximum), String::valueOf, reader, writer, true);
     }
 
     static Setting<Boolean> flag(Function<ZiplineSettings, Boolean> reader,
@@ -102,6 +109,13 @@ final class Setting<T> {
     static Setting<Sound> sound(Function<ZiplineSettings, Sound> reader,
                                 BiConsumer<ZiplineSettings, Sound> writer) {
         return new Setting<>(Sounds::parse, Sounds::name, reader, writer, true);
+    }
+
+    private static Function<String, Integer> range(int minimum, int maximum) {
+        return raw -> {
+            Integer parsed = parseInt(raw);
+            return parsed != null && parsed >= minimum && parsed <= maximum ? parsed : null;
+        };
     }
 
     private static <E extends Enum<E>> E parseConstant(Class<E> type, String raw) {
