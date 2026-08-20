@@ -30,6 +30,17 @@ final class Suggestions {
         return () -> fixed;
     }
 
+    /**
+     * The given values, headed by {@link ZiplineOption#NONE} for an option that may be left unset.
+     */
+    static Supplier<List<String>> optional(String... values) {
+        List<String> names = new ArrayList<>();
+        names.add(ZiplineOption.NONE);
+        names.addAll(List.of(values));
+        List<String> fixed = List.copyOf(names);
+        return () -> fixed;
+    }
+
     static Supplier<List<String>> constants(Enum<?>[] values) {
         List<String> names = new ArrayList<>(values.length);
         for (Enum<?> value : values) {

@@ -37,10 +37,12 @@ public class ZiplineManager {
     private static final Pattern VALID_ID = Pattern.compile("[A-Za-z0-9_-]{1,32}");
 
     /**
-     * Options that change how endpoint seats look, so the existing ones have to be respawned.
+     * Options that change how endpoint seats look or where they go, so the existing ones have to be
+     * respawned.
      */
     private static final Set<ZiplineOption> SEAT_OPTIONS = Set.of(
             ZiplineOption.SEAT,
+            ZiplineOption.DIRECTION,
             ZiplineOption.SEAT_MATERIAL,
             ZiplineOption.SEAT_SCALE,
             ZiplineOption.SEAT_OFFSET);

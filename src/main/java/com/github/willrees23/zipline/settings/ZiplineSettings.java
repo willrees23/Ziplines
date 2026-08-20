@@ -31,9 +31,11 @@ public class ZiplineSettings {
     private Particle pathParticle = Particle.CLOUD;
     private Particle endpointParticle = Particle.END_ROD;
     private TriggerMode trigger = TriggerMode.WALK;
+    private RideDirection direction = RideDirection.BOTH;
     private MovementMode movementMode = MovementMode.MOUNTED;
     private ExitMode exitMode = ExitMode.DROP;
     private double launchPower = 1.5;
+    private Integer maxRiders = null;
     private Sound rideSound = Sound.BLOCK_NOTE_BLOCK_BASS;
     private double rideSoundVolume = 0.5;
     private int rideSoundInterval = 2;
@@ -46,8 +48,40 @@ public class ZiplineSettings {
     private Material seatMaterial = Material.OAK_SLAB;
     private double seatScale = 0.8;
     private double seatOffset = 0.0;
+    private boolean seatReturn = false;
     private boolean fallDamage = false;
     private boolean sneakExit = false;
+
+    /**
+     * Whether one more player may board while {@code riding} of them are already on the line.
+     *
+     * <p>An unset limit lets on as many riders as care to board.
+     */
+    public boolean allowsRider(int riding) {
+        return maxRiders == null || riding < maxRiders;
+    }
+
+    /**
+     * Whether a ride should carry the seat parked at the end it boards from, rather than spawning
+     * one of its own on top of it.
+     *
+     * <p>Only a line with a single rider can: were a second player to board, the seat would already
+     * have gone off down the line with the first.
+     */
+    public boolean carriesEndpointSeat() {
+        return seat && maxRiders != null && maxRiders == 1 && movementMode == MovementMode.MOUNTED;
+    }
+
+    /**
+     * Whether a seat carried off down the line has to travel back to the end it belongs to, rather
+     * than being put back the moment the ride is over.
+     *
+     * <p>Only a line whose seat leaves its end in the first place has anything to bring back, so
+     * this follows {@link #carriesEndpointSeat()}.
+     */
+    public boolean returnsEndpointSeat() {
+        return seatReturn && carriesEndpointSeat();
+    }
 
     /**
      * Converts the player-facing speed into the distance covered per server tick.

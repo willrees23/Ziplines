@@ -21,12 +21,22 @@ defaults:
 
   # What starts a ride: WALK into the end of the line, or RIGHT_CLICK near it.
   trigger: WALK
+  # Which ends the line can be boarded from: BOTH, START_TO_END for one way from where the line
+  # was started, or END_TO_START for one way from where it was finished. The end a one way line
+  # cannot be boarded from shows no endpoint particles and no seat.
+  direction: BOTH
   # How the rider is carried: MOUNTED puts them on a seat, VELOCITY pushes them along.
   movement-mode: MOUNTED
   # What happens at the far end: DROP lets them fall, LAUNCH throws them onwards.
   exit-mode: DROP
   # Strength of the throw when exit-mode is LAUNCH, from 0 to 10.
   launch-power: 1.5
+
+  # How many players may ride one line at once, from 1 to 100, or NONE for no limit. A line that is
+  # already carrying that many is passed over when a player tries to board, and they are told it is
+  # full. Set to 1, the seat parked at the end being boarded from is the one that carries the rider,
+  # rather than a second seat spawning on top of it.
+  max-riders: NONE
 
   # Sound played while riding, or NONE for silence. Pitch slides from start to end over the ride.
   ride-sound: BLOCK_NOTE_BLOCK_BASS
@@ -41,7 +51,7 @@ defaults:
   end-sound-volume: 1.0
   end-sound-pitch: 1.0
 
-  # Show a seat under the rider and at each end of the line.
+  # Show a seat under the rider, and at each end of the line that can be boarded from.
   seat: true
   # Block the seat is made of. Slabs sit best under a rider.
   seat-material: OAK_SLAB
@@ -49,6 +59,11 @@ defaults:
   seat-scale: 0.8
   # Nudge the seat up or down, from -2 to 2.
   seat-offset: 0.0
+  # Make a seat that has been carried off travel back down the line to the end it belongs to, at the
+  # line's own speed, instead of being put back the instant the ride ends. The line cannot be
+  # boarded again until it arrives. Only does anything on a line set to a single rider, since that
+  # is the only kind whose seat leaves its end.
+  seat-return: false
 
   # Take fall damage from the drop at the end of a ride.
   fall-damage: false

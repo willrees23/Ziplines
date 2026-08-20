@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,5 +48,20 @@ class ZiplineOptionTest {
     @DisplayName("an unknown key yields nothing rather than failing")
     void unknownKeysReturnNull() {
         assertNull(ZiplineOption.fromKey("nonsense"));
+    }
+
+    @Test
+    @DisplayName("the seat return is a flag, since a line either waits for its seat or does not")
+    void seatReturnIsAFlag() {
+        assertSame(ZiplineOption.SEAT_RETURN, ZiplineOption.fromKey("seat-return"));
+        assertEquals(List.of("true", "false"), ZiplineOption.SEAT_RETURN.getSuggestions());
+    }
+
+    @Test
+    @DisplayName("the rider limit offers NONE alongside its counts, so no limit can be tabbed to")
+    void riderLimitSuggestsNoneAndCounts() {
+        assertSame(ZiplineOption.MAX_RIDERS, ZiplineOption.fromKey("max-riders"));
+        assertTrue(ZiplineOption.MAX_RIDERS.getSuggestions().contains(ZiplineOption.NONE));
+        assertTrue(ZiplineOption.MAX_RIDERS.getSuggestions().contains("1"));
     }
 }
