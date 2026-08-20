@@ -1,6 +1,7 @@
 package com.github.willrees23.zipline.seat;
 
 import com.github.willrees23.zipline.Zipline;
+import com.github.willrees23.zipline.settings.RideDirection;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.BlockDisplay;
@@ -8,8 +9,8 @@ import org.bukkit.entity.BlockDisplay;
 import java.util.*;
 
 /**
- * Keeps a block display parked at each end of every zipline, so players can see where a line can be
- * boarded.
+ * Keeps a block display parked at every end a zipline can be boarded from, so players can see where
+ * to get on. A one way line therefore shows a seat at one end only.
  *
  * <p>These displays are not saved with the chunk, so they have to be respawned whenever the area is
  * reloaded. {@link #refresh(Zipline)} is called from the effect task for nearby ziplines and is
@@ -39,15 +40,17 @@ public class SeatManager {
             endpoints.remove(zipline.getId());
         }
 
-        Location start = seatLocation(zipline, zipline.getStart(), zipline.getEnd());
-        Location end = seatLocation(zipline, zipline.getEnd(), zipline.getStart());
-        if (!isLoaded(start) || !isLoaded(end)) {
-            return;
+        List<Location> locations = seatLocations(zipline);
+        for (Location location : locations) {
+            if (!isLoaded(location)) {
+                return;
+            }
         }
 
         List<BlockDisplay> spawned = new ArrayList<>();
-        spawned.add(seats.spawnDisplay(start, zipline.getSettings()));
-        spawned.add(seats.spawnDisplay(end, zipline.getSettings()));
+        for (Location location : locations) {
+            spawned.add(seats.spawnDisplay(location, zipline.getSettings()));
+        }
         endpoints.put(zipline.getId(), spawned);
     }
 
@@ -62,6 +65,21 @@ public class SeatManager {
         for (String id : Set.copyOf(endpoints.keySet())) {
             despawn(endpoints.remove(id));
         }
+    }
+
+    /**
+     * Returns where this zipline wants its displays: one for each end a rider may board from.
+     */
+    private List<Location> seatLocations(Zipline zipline) {
+        RideDirection direction = zipline.getSettings().getDirection();
+        List<Location> locations = new ArrayList<>(2);
+        if (direction.allowsStart()) {
+            locations.add(seatLocation(zipline, zipline.getStart(), zipline.getEnd()));
+        }
+        if (direction.allowsEnd()) {
+            locations.add(seatLocation(zipline, zipline.getEnd(), zipline.getStart()));
+        }
+        return locations;
     }
 
     /**
