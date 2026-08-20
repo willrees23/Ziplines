@@ -117,6 +117,26 @@ public class PathGeometry {
     }
 
     /**
+     * Returns how far along the line from {@code from} to {@code to} a position lies, as a fraction
+     * of the line's length.
+     *
+     * <p>Measured across the ground, because whatever is being placed on the line hangs below it
+     * rather than sitting on it, and clamped to the line, so that anything past either end counts
+     * as being at that end.
+     */
+    public double fractionAlong(Location from, Location to, Location position) {
+        double runX = to.getX() - from.getX();
+        double runZ = to.getZ() - from.getZ();
+        double run = runX * runX + runZ * runZ;
+        if (run <= 0) {
+            return 0;
+        }
+
+        double along = (position.getX() - from.getX()) * runX + (position.getZ() - from.getZ()) * runZ;
+        return Math.max(0, Math.min(1, along / run));
+    }
+
+    /**
      * Returns the block of the line strung above the given height.
      */
     public int pathBlockY(double lineY) {

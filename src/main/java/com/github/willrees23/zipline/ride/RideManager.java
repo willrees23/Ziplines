@@ -42,10 +42,10 @@ public final class RideManager {
     private static final long FALL_GRACE_MILLIS = 10000L;
 
     /**
-     * How long a player turned away from a full line waits before being told again, so that milling
+     * How long a player turned away from a line waits before being told again, so that milling
      * about at a busy endpoint does not fill their chat.
      */
-    private static final long FULL_NOTICE_MILLIS = 3000L;
+    private static final long BUSY_NOTICE_MILLIS = 3000L;
 
     /**
      * Fraction of ride speed carried into the drop, so riders do not stop dead at the end.
@@ -65,7 +65,7 @@ public final class RideManager {
     private final Map<UUID, ZiplineRide> rides = new HashMap<>();
     private final Map<UUID, Long> triggerCooldowns = new HashMap<>();
     private final Map<UUID, Long> fallGrace = new HashMap<>();
-    private final Map<UUID, Long> fullNotices = new HashMap<>();
+    private final Map<UUID, Long> busyNotices = new HashMap<>();
 
     private final RepeatingTask task;
 
@@ -91,8 +91,8 @@ public final class RideManager {
      * <p>Every end a candidate can be boarded from is considered, and the nearest wins, so a line
      * is ridden in whichever direction the player walked up to it, unless its {@code direction}
      * setting only allows one of them. A line already carrying as many riders as its
-     * {@code max-riders} setting allows is passed over, so a player stood between two lines still
-     * boards the one with room.
+     * {@code max-riders} setting allows, or waiting on its seat to come back, is passed over, so a
+     * player stood between two lines still boards the one that is free.
      */
     public void tryStart(Player player, TriggerMode mode) {
         if (isRiding(player) || isOnCooldown(player)
@@ -104,7 +104,7 @@ public final class RideManager {
         Location eyes = player.getEyeLocation();
 
         Zipline closest = null;
-        Zipline full = null;
+        Zipline busy = null;
         Location from = null;
         Location to = null;
         double closestDistance = radius * radius;
@@ -121,9 +121,9 @@ public final class RideManager {
                 continue;
             }
 
-            if (isFull(zipline)) {
+            if (isBusy(zipline)) {
                 // Remembered rather than acted on, in case a line with room turns out to be nearer.
-                full = zipline;
+                busy = zipline;
                 continue;
             }
 
@@ -136,8 +136,8 @@ public final class RideManager {
 
         if (closest != null) {
             start(player, closest, from, to);
-        } else if (full != null) {
-            notifyFull(player, full);
+        } else if (busy != null) {
+            notifyBusy(player, busy);
         }
     }
 
@@ -240,7 +240,7 @@ public final class RideManager {
         end(player.getUniqueId(), true);
         triggerCooldowns.remove(player.getUniqueId());
         fallGrace.remove(player.getUniqueId());
-        fullNotices.remove(player.getUniqueId());
+        busyNotices.remove(player.getUniqueId());
         stopWhenIdle();
     }
 
@@ -299,22 +299,36 @@ public final class RideManager {
     }
 
     /**
-     * Tells the player the line is full, at most once every {@link #FULL_NOTICE_MILLIS}, since the
-     * walk trigger fires again on every block they cross.
+     * Tells the player why they were turned away, at most once every {@link #BUSY_NOTICE_MILLIS},
+     * since the walk trigger fires again on every block they cross.
      */
-    private void notifyFull(Player player, Zipline zipline) {
+    private void notifyBusy(Player player, Zipline zipline) {
         long now = System.currentTimeMillis();
-        Long expiry = fullNotices.get(player.getUniqueId());
+        Long expiry = busyNotices.get(player.getUniqueId());
         if (expiry != null && expiry > now) {
             return;
         }
-        fullNotices.put(player.getUniqueId(), now + FULL_NOTICE_MILLIS);
-        ChatUtil.sendHighlighted(player, "&cZipline %s is full: it carries %s at a time.",
-                zipline.getId(), riders(zipline.getSettings().getMaxRiders()));
+
+        busyNotices.put(player.getUniqueId(), now + BUSY_NOTICE_MILLIS);
+        if (isFull(zipline)) {
+            ChatUtil.sendHighlighted(player, "&cZipline %s is full: it carries %s at a time.",
+                    zipline.getId(), riders(zipline.getSettings().getMaxRiders()));
+        } else {
+            ChatUtil.sendHighlighted(player, "&cZipline %s is not ready: wait for its seat to come back.",
+                    zipline.getId());
+        }
     }
 
     private String riders(int limit) {
         return limit == 1 ? "one rider" : limit + " riders";
+    }
+
+    /**
+     * Whether the zipline cannot take another rider at the moment, either because it is carrying
+     * all it is allowed to or because the seat to board is still on its way back.
+     */
+    private boolean isBusy(Zipline zipline) {
+        return isFull(zipline) || endpointSeats.isReturning(zipline);
     }
 
     /**
