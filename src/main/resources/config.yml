@@ -21,6 +21,10 @@ defaults:
 
   # What starts a ride: WALK into the end of the line, or RIGHT_CLICK near it.
   trigger: WALK
+  # Which ends the line can be boarded from: BOTH, START_TO_END for one way from where the line
+  # was started, or END_TO_START for one way from where it was finished. The end a one way line
+  # cannot be boarded from shows no endpoint particles and no seat.
+  direction: BOTH
   # How the rider is carried: MOUNTED puts them on a seat, VELOCITY pushes them along.
   movement-mode: MOUNTED
   # What happens at the far end: DROP lets them fall, LAUNCH throws them onwards.
@@ -41,7 +45,7 @@ defaults:
   end-sound-volume: 1.0
   end-sound-pitch: 1.0
 
-  # Show a seat under the rider and at each end of the line.
+  # Show a seat under the rider, and at each end of the line that can be boarded from.
   seat: true
   # Block the seat is made of. Slabs sit best under a rider.
   seat-material: OAK_SLAB
