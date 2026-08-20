@@ -48,4 +48,12 @@ class ZiplineOptionTest {
     void unknownKeysReturnNull() {
         assertNull(ZiplineOption.fromKey("nonsense"));
     }
+
+    @Test
+    @DisplayName("the rider limit offers NONE alongside its counts, so no limit can be tabbed to")
+    void riderLimitSuggestsNoneAndCounts() {
+        assertSame(ZiplineOption.MAX_RIDERS, ZiplineOption.fromKey("max-riders"));
+        assertTrue(ZiplineOption.MAX_RIDERS.getSuggestions().contains(ZiplineOption.NONE));
+        assertTrue(ZiplineOption.MAX_RIDERS.getSuggestions().contains("1"));
+    }
 }
