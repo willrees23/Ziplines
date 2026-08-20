@@ -61,6 +61,17 @@ public class ZiplineSettings {
     }
 
     /**
+     * Whether a ride should carry the seat parked at the end it boards from, rather than spawning
+     * one of its own on top of it.
+     *
+     * <p>Only a line with a single rider can: were a second player to board, the seat would already
+     * have gone off down the line with the first.
+     */
+    public boolean carriesEndpointSeat() {
+        return seat && maxRiders != null && maxRiders == 1 && movementMode == MovementMode.MOUNTED;
+    }
+
+    /**
      * Converts the player-facing speed into the distance covered per server tick.
      */
     public double getBlocksPerTick() {

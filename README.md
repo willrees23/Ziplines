@@ -48,7 +48,9 @@ To ride, walk into either end of the line. Ziplines can be ridden in both direct
 `direction` on one to have it board from a single end only.
 
 Any number of players can share a line by default. Set `max-riders` on one to let only so many ride
-it at a time; anyone who walks up to a line that is already full is told so rather than boarded.
+it at a time; anyone who walks up to a line that is already full is told so rather than boarded. A
+line set to a single rider hands them the seat parked at the end they board from and carries it
+along with them, so the seat they walked up to is the one they leave on.
 
 ## Commands
 

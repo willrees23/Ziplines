@@ -34,7 +34,8 @@ defaults:
 
   # How many players may ride one line at once, from 1 to 100, or NONE for no limit. A line that is
   # already carrying that many is passed over when a player tries to board, and they are told it is
-  # full.
+  # full. Set to 1, the seat parked at the end being boarded from is the one that carries the rider,
+  # rather than a second seat spawning on top of it.
   max-riders: NONE
 
   # Sound played while riding, or NONE for silence. Pitch slides from start to end over the ride.

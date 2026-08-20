@@ -7,6 +7,7 @@ import com.github.willrees23.util.ChatUtil;
 import com.github.willrees23.zipline.Zipline;
 import com.github.willrees23.zipline.ZiplineIndex;
 import com.github.willrees23.zipline.seat.SeatFactory;
+import com.github.willrees23.zipline.seat.SeatManager;
 import com.github.willrees23.zipline.settings.ExitMode;
 import com.github.willrees23.zipline.settings.RideDirection;
 import com.github.willrees23.zipline.settings.TriggerMode;
@@ -15,6 +16,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -58,6 +60,7 @@ public final class RideManager {
     private final ZiplineConfig config;
     private final ZiplineIndex index;
     private final SeatFactory seats;
+    private final SeatManager endpointSeats;
 
     private final Map<UUID, ZiplineRide> rides = new HashMap<>();
     private final Map<UUID, Long> triggerCooldowns = new HashMap<>();
@@ -66,10 +69,15 @@ public final class RideManager {
 
     private final RepeatingTask task;
 
-    public RideManager(Plugin plugin, ZiplineConfig config, ZiplineIndex index, SeatFactory seats) {
+    public RideManager(Plugin plugin,
+                       ZiplineConfig config,
+                       ZiplineIndex index,
+                       SeatFactory seats,
+                       SeatManager endpointSeats) {
         this.config = config;
         this.index = index;
         this.seats = seats;
+        this.endpointSeats = endpointSeats;
         this.task = new RepeatingTask(plugin, RIDE_INTERVAL, this::tickRides);
     }
 
@@ -134,7 +142,12 @@ public final class RideManager {
     }
 
     public void start(Player player, Zipline zipline, Location from, Location to) {
-        rides.put(player.getUniqueId(), new ZiplineRide(seats, player, zipline, from, to));
+        // A single rider line rides the seat already parked at the end they board from, so that the
+        // seat they walked up to is the one that carries them rather than a second one on top of it.
+        BlockDisplay endpointSeat = zipline.getSettings().carriesEndpointSeat()
+                ? endpointSeats.lend(zipline, from)
+                : null;
+        rides.put(player.getUniqueId(), new ZiplineRide(seats, player, zipline, from, to, endpointSeat));
         task.start();
     }
 
@@ -151,7 +164,7 @@ public final class RideManager {
         }
 
         ride.setEnding(true);
-        ride.releaseSeat();
+        releaseSeat(ride);
 
         triggerCooldowns.put(player.getUniqueId(), System.currentTimeMillis() + TRIGGER_COOLDOWN_MILLIS);
         if (!ride.getZipline().getSettings().isFallDamage()) {
@@ -247,7 +260,18 @@ public final class RideManager {
         ZiplineRide ride = rides.remove(uuid);
         if (ride != null) {
             ride.setEnding(true);
-            ride.releaseSeat();
+            releaseSeat(ride);
+        }
+    }
+
+    /**
+     * Lets go of the ride's seat, parking it back at its end if it was the endpoint's own.
+     */
+    private void releaseSeat(ZiplineRide ride) {
+        boolean borrowed = ride.isCarryingEndpointSeat();
+        ride.releaseSeat();
+        if (borrowed) {
+            endpointSeats.restore(ride.getZipline());
         }
     }
 

@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -51,7 +52,12 @@ public class ZiplineRide {
     private double travelled;
     private int ticks;
 
-    public ZiplineRide(SeatFactory seats, Player player, Zipline zipline, Location from, Location to) {
+    public ZiplineRide(SeatFactory seats,
+                       Player player,
+                       Zipline zipline,
+                       Location from,
+                       Location to,
+                       BlockDisplay endpointSeat) {
         this.player = player;
         this.zipline = zipline;
         this.origin = from.toVector();
@@ -62,7 +68,7 @@ public class ZiplineRide {
         this.yaw = (float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ()));
 
         this.seat = zipline.getSettings().getMovementMode() == MovementMode.MOUNTED
-                ? new RideSeat(seats, player, zipline.getSettings(), ridePoint(0))
+                ? new RideSeat(seats, player, zipline.getSettings(), ridePoint(0), endpointSeat)
                 : null;
     }
 
@@ -86,6 +92,14 @@ public class ZiplineRide {
 
     public boolean isVehicle(Entity entity) {
         return seat != null && seat.isVehicle(entity);
+    }
+
+    /**
+     * Whether this ride took the endpoint's own seat with it, so that it has to be parked again
+     * once the ride is over.
+     */
+    public boolean isCarryingEndpointSeat() {
+        return seat != null && seat.isBorrowed();
     }
 
     public void releaseSeat() {
