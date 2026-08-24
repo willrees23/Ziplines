@@ -1,5 +1,13 @@
 package com.github.willrees23;
 
+import com.github.willrees23.command.ZiplineCancelCommand;
+import com.github.willrees23.command.ZiplineDeleteCommand;
+import com.github.willrees23.command.ZiplineEditCommand;
+import com.github.willrees23.command.ZiplineEndCommand;
+import com.github.willrees23.command.ZiplineExceptionHandler;
+import com.github.willrees23.command.ZiplineId;
+import com.github.willrees23.command.ZiplineListCommand;
+import com.github.willrees23.command.ZiplineStartCommand;
 import com.github.willrees23.command.ZiplinesCommand;
 import com.github.willrees23.config.ZiplineConfig;
 import com.github.willrees23.listener.PlayerQuitListener;
@@ -12,9 +20,11 @@ import com.github.willrees23.zipline.effect.ZiplineEffectTask;
 import com.github.willrees23.zipline.ride.RideManager;
 import com.github.willrees23.zipline.seat.SeatFactory;
 import com.github.willrees23.zipline.seat.SeatManager;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import revxrsal.commands.Lamp;
+import revxrsal.commands.bukkit.BukkitLamp;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 /**
  * Entry point for the plugin.
@@ -25,8 +35,6 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class ZiplinesPlugin extends JavaPlugin {
 
-    private static final String COMMAND = "ziplines";
-
     private ZiplineManager ziplines;
     private RideManager rides;
     private SeatManager seats;
@@ -34,13 +42,6 @@ public class ZiplinesPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        PluginCommand command = getCommand(COMMAND);
-        if (command == null) {
-            getLogger().severe("The " + COMMAND + " command is missing from plugin.yml; disabling.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-
         ZiplineConfig config = new ZiplineConfig(this);
         config.load();
 
@@ -55,7 +56,7 @@ public class ZiplinesPlugin extends JavaPlugin {
         ziplines.load();
         effects.start();
 
-        command.setExecutor(new ZiplinesCommand(ziplines));
+        registerCommands();
         register(new PlayerQuitListener(ziplines, rides));
         register(new ZiplineTriggerListener(rides));
         register(new ZiplineRideListener(rides, seatFactory));
@@ -72,6 +73,32 @@ public class ZiplinesPlugin extends JavaPlugin {
         seats.removeAll();
         effects.stop();
         ziplines.shutdown();
+    }
+
+    /**
+     * Hands the command classes to Lamp, which builds {@code /ziplines} out of them and registers it
+     * with the server. Nothing about the command appears in {@code plugin.yml}: adding a
+     * sub-command means writing its class and naming it here.
+     */
+    private void registerCommands() {
+        Lamp<BukkitCommandActor> lamp = BukkitLamp.builder(this)
+                // Fills the @Dependency field each command class declares.
+                .dependency(ZiplineManager.class, ziplines)
+                // Completions for @ZiplineId, which need the manager and so cannot be built reflectively.
+                .suggestionProviders(providers -> providers.addProviderForAnnotation(
+                        ZiplineId.class, annotation -> context -> ziplines.getIds()))
+                .exceptionHandler(new ZiplineExceptionHandler())
+                .build();
+
+        lamp.register(
+                new ZiplinesCommand(),
+                new ZiplineStartCommand(),
+                new ZiplineEndCommand(),
+                new ZiplineCancelCommand(),
+                new ZiplineDeleteCommand(),
+                new ZiplineEditCommand(),
+                new ZiplineListCommand()
+        );
     }
 
     private void register(Listener listener) {
