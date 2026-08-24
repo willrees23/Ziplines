@@ -4,7 +4,7 @@ description: ${project.description}
 website: ${project.url}
 author: Will Rees
 main: com.github.willrees23.ZiplinesPlugin
-api-version: 26.2
+api-version: 1.13
 
 permissions:
   ziplines.use:
