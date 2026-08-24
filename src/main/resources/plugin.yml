@@ -6,12 +6,6 @@ author: Will Rees
 main: com.github.willrees23.ZiplinesPlugin
 api-version: 26.2
 
-commands:
-  ziplines:
-    description: Create, edit and remove ziplines.
-    usage: /ziplines <start|end|cancel|delete|edit|list>
-    aliases: [ zipline, zl ]
-
 permissions:
   ziplines.use:
     description: Ride a zipline.
