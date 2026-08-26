@@ -1,0 +1,144 @@
+name: Prepare release
+
+# Raises the version on dev and opens the release pull request into main.
+#
+# The bump therefore lands *before* the merge rather than after it, which is what
+# keeps the two branches identical: by the time main has the new version, dev
+# already has it, so there is never anything to merge back.
+
+on:
+  workflow_dispatch:
+    inputs:
+      level:
+        description: 'How much to raise the version'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Shared with the Release workflow, so preparing cannot overlap releasing.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+          # RELEASE_TOKEN is strongly preferred here. A pull request opened by the
+          # built-in GITHUB_TOKEN does not trigger other workflows, so the release
+          # PR would otherwise arrive with no Build check against it.
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Fetch main, and the tags
+        run: git fetch --tags --force origin +refs/heads/main:refs/remotes/origin/main
+
+      - name: Check there is something to release
+        run: |
+          set -euo pipefail
+
+          count=$(git rev-list --count origin/main..HEAD)
+          if [ "$count" -eq 0 ]; then
+            echo "::error::dev holds no commits that main does not already have."
+            exit 1
+          fi
+
+          echo "${count} commit(s) on dev are waiting to be released."
+
+      - name: Work out the new version
+        id: version
+        env:
+          LEVEL: ${{ inputs.level }}
+        run: |
+          set -euo pipefail
+
+          current=$(mvn --batch-mode --no-transfer-progress help:evaluate \
+                      -Dexpression=project.version -q -DforceStdout)
+          current=${current%-SNAPSHOT}
+          echo "Current version: $current"
+
+          # An untagged current version means an earlier prepare was never merged.
+          # Bumping past it is harmless, but it does silently skip that version.
+          if ! git rev-parse -q --verify "refs/tags/v${current}" >/dev/null; then
+            echo "::warning::${current} was prepared but never released, and will be skipped."
+          fi
+
+          IFS=. read -r major minor patch <<< "$current"
+
+          case "$LEVEL" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+
+          next="${major}.${minor}.${patch}"
+          echo "New version: $next"
+
+          if git rev-parse -q --verify "refs/tags/v${next}" >/dev/null; then
+            echo "::error::Tag v${next} already exists."
+            exit 1
+          fi
+
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Set the version in the POM
+        run: |
+          mvn --batch-mode --no-transfer-progress versions:set \
+            -DnewVersion="${{ steps.version.outputs.version }}" \
+            -DgenerateBackupPoms=false
+
+      # Nothing is committed to dev unless the release actually builds.
+      - name: Build and test
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Commit the version to dev
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git add pom.xml
+          git commit -m "chore(release): ${VERSION}"
+          git push origin HEAD:dev
+
+      - name: Open, or update, the release pull request
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          body="Merging this pull request tags \`v${VERSION}\`, builds the jar and publishes the release."
+
+          # A release that was prepared and then re-prepared reuses its pull request.
+          existing=$(gh pr list --base main --head dev --state open \
+                       --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --title "Release ${VERSION}" --body "$body"
+            echo "Updated pull request #${existing}."
+          else
+            gh pr create --base main --head dev \
+              --title "Release ${VERSION}" --body "$body"
+          fi
