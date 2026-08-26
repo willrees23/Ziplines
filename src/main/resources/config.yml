@@ -18,6 +18,10 @@ defaults:
   path-particle: CLOUD
   # Particle circling each end of the line, marking where it can be boarded.
   endpoint-particle: END_ROD
+  # Hold the line together: its blocks cannot be mined, burnt, blown up, carried off by an enderman
+  # or pushed about by a piston. Deleting the zipline still takes them down as it always did. Only
+  # does anything when path-type is BLOCK, since a PARTICLE line puts nothing in the world to break.
+  unbreakable: true
 
   # What starts a ride: WALK into the end of the line, or RIGHT_CLICK near it.
   trigger: WALK
@@ -75,3 +79,14 @@ trigger-radius: 1.5
 
 # Longest zipline that may be built, in blocks. Minimum 2.
 max-length: 256
+
+# What a player is told when an unbreakable zipline refuses to let one of its blocks be broken.
+# This is server wide: individual ziplines choose whether to be unbreakable, not what to say.
+unbreakable-message:
+  # Whether to say anything at all. Turned off, the break is still refused, just in silence. The
+  # wording below is kept either way, so it is still there when you turn the message back on.
+  enabled: true
+  # Colour codes written with & are applied, and %s is replaced with the name of the zipline and
+  # picked out in yellow. Leave the quotes: a value opening with & means something else in YAML.
+  text: "&cThat block is part of the zipline %s."
+

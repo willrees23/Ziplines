@@ -30,6 +30,7 @@ public class ZiplineSettings {
     private Material material = Material.OAK_FENCE;
     private Particle pathParticle = Particle.CLOUD;
     private Particle endpointParticle = Particle.END_ROD;
+    private boolean unbreakable = true;
     private TriggerMode trigger = TriggerMode.WALK;
     private RideDirection direction = RideDirection.BOTH;
     private MovementMode movementMode = MovementMode.MOUNTED;

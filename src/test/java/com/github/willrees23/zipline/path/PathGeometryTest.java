@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PathGeometryTest {
@@ -106,6 +107,54 @@ class PathGeometryTest {
         List<Vector> points = PathGeometry.samplePoints(at(1, 2, 3), at(1, 2, 3), 0.5);
 
         assertEquals(List.of(new Vector(1, 2, 3)), points);
+    }
+
+    @Test
+    @DisplayName("the packed keys cover exactly the blocks the walk visits")
+    void pathBlockKeysMatchTheWalk() {
+        Location start = at(3.2, 64.8, -7.1);
+        Location end = at(-11.9, 70.2, 4.6);
+
+        List<Vector> blocks = PathGeometry.pathBlocks(start, end);
+        Set<Long> keys = PathGeometry.pathBlockKeys(start, end);
+
+        assertEquals(blocks.size(), keys.size());
+        for (Vector block : blocks) {
+            assertTrue(keys.contains(
+                            PathGeometry.blockKey(block.getBlockX(), block.getBlockY(), block.getBlockZ())),
+                    "missing " + block);
+        }
+    }
+
+    @Test
+    @DisplayName("a block just off the line is not one of its keys")
+    void pathBlockKeysExcludeBlocksOffTheLine() {
+        Set<Long> keys = PathGeometry.pathBlockKeys(at(0.5, 64.5, 0.5), at(10.5, 64.5, 0.5));
+
+        int lineY = 64 + PathGeometry.PATH_RISE;
+        assertTrue(keys.contains(PathGeometry.blockKey(5, lineY, 0)));
+        assertFalse(keys.contains(PathGeometry.blockKey(5, lineY, 1)), "the block beside the line");
+        assertFalse(keys.contains(PathGeometry.blockKey(5, lineY - 1, 0)), "the block below the line");
+        assertFalse(keys.contains(PathGeometry.blockKey(11, lineY, 0)), "the block past the end");
+    }
+
+    @Test
+    @DisplayName("distinct block positions pack to distinct keys, negatives and world edges included")
+    void blockKeysAreDistinct() {
+        Set<Long> keys = new HashSet<>();
+        int[] coordinates = {-30_000_000, -4096, -1, 0, 1, 4096, 30_000_000};
+
+        int packed = 0;
+        for (int x : coordinates) {
+            for (int y : new int[]{-64, 0, 319}) {
+                for (int z : coordinates) {
+                    keys.add(PathGeometry.blockKey(x, y, z));
+                    packed++;
+                }
+            }
+        }
+
+        assertEquals(packed, keys.size(), "two positions packed to the same key");
     }
 
     @Test
