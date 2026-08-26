@@ -58,6 +58,13 @@ class ZiplineOptionTest {
     }
 
     @Test
+    @DisplayName("unbreakable is a flag, since a line either holds its path together or does not")
+    void unbreakableIsAFlag() {
+        assertSame(ZiplineOption.UNBREAKABLE, ZiplineOption.fromKey("unbreakable"));
+        assertEquals(List.of("true", "false"), ZiplineOption.UNBREAKABLE.getSuggestions());
+    }
+
+    @Test
     @DisplayName("the rider limit offers NONE alongside its counts, so no limit can be tabbed to")
     void riderLimitSuggestsNoneAndCounts() {
         assertSame(ZiplineOption.MAX_RIDERS, ZiplineOption.fromKey("max-riders"));

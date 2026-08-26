@@ -5,7 +5,9 @@ import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The shared geometry of a zipline: where its line of blocks sits relative to the two points that
@@ -38,6 +40,15 @@ public class PathGeometry {
      * Blocks that must be clear at and below each block of the line for a ride to fit through.
      */
     public final int CLEARANCE_DEPTH = 1 + MOUNT_DROP + VEHICLE_DEPTH;
+
+    /**
+     * Bits {@link #blockKey} gives each horizontal axis, which covers a world's whole 30 million
+     * block reach, and the bits left over for the height, comfortably more than any world is tall.
+     */
+    private final int HORIZONTAL_BITS = 26;
+    private final int VERTICAL_BITS = 12;
+    private final long HORIZONTAL_MASK = (1L << HORIZONTAL_BITS) - 1;
+    private final long VERTICAL_MASK = (1L << VERTICAL_BITS) - 1;
 
     /**
      * Returns points spaced {@code step} apart along the straight line between the endpoints.
@@ -114,6 +125,28 @@ public class PathGeometry {
             blocks.add(new Vector(x, y + PATH_RISE, z));
         }
         return blocks;
+    }
+
+    /**
+     * Returns the blocks of {@link #pathBlocks} as packed keys, for callers that only need to ask
+     * whether a given block is one of them rather than walk them in order.
+     */
+    public Set<Long> pathBlockKeys(Location start, Location end) {
+        List<Vector> blocks = pathBlocks(start, end);
+        Set<Long> keys = new HashSet<>(blocks.size() * 2);
+        for (Vector block : blocks) {
+            keys.add(blockKey(block.getBlockX(), block.getBlockY(), block.getBlockZ()));
+        }
+        return keys;
+    }
+
+    /**
+     * Packs a block position into one long, so a set of them needs no object per block.
+     */
+    public long blockKey(int x, int y, int z) {
+        return ((x & HORIZONTAL_MASK) << (HORIZONTAL_BITS + VERTICAL_BITS))
+                | ((z & HORIZONTAL_MASK) << VERTICAL_BITS)
+                | (y & VERTICAL_MASK);
     }
 
     /**
