@@ -1,13 +1,16 @@
 package com.github.willrees23.zipline;
 
+import com.github.willrees23.zipline.path.PathGeometry;
 import com.github.willrees23.zipline.path.PathProfile;
 import com.github.willrees23.zipline.path.PlacedBlock;
 import com.github.willrees23.zipline.settings.ZiplineSettings;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * One zipline: two endpoints in a world, the settings that govern how it looks and rides, and a
@@ -33,6 +36,12 @@ public class Zipline {
 
     private PathProfile profile;
 
+    /**
+     * The blocks of the path, packed for lookup. Built on demand and dropped when the end moves.
+     */
+    @Getter(AccessLevel.NONE)
+    private Set<Long> pathBlockKeys;
+
     public Zipline(String id, Location start, ZiplineSettings settings) {
         this(id, start, null, settings);
     }
@@ -47,6 +56,25 @@ public class Zipline {
     public void setEnd(Location end) {
         this.end = end;
         this.profile = null;
+        this.pathBlockKeys = null;
+    }
+
+    /**
+     * Whether the line runs through the given block.
+     *
+     * <p>Answered from the line's geometry rather than from {@link #getPlacedBlocks()}, which the
+     * renderer only fills with the blocks it actually replaced. The two differ wherever the path
+     * ran through a block that was already the right material: the renderer leaves such a block
+     * alone and so never records it, but it is part of the line all the same.
+     */
+    public boolean coversPathBlock(int x, int y, int z) {
+        if (end == null) {
+            return false;
+        }
+        if (pathBlockKeys == null) {
+            pathBlockKeys = PathGeometry.pathBlockKeys(start, end);
+        }
+        return pathBlockKeys.contains(PathGeometry.blockKey(x, y, z));
     }
 
     /**
