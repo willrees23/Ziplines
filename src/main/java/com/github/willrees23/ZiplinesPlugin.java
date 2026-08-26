@@ -11,10 +11,12 @@ import com.github.willrees23.command.ZiplineStartCommand;
 import com.github.willrees23.command.ZiplinesCommand;
 import com.github.willrees23.config.ZiplineConfig;
 import com.github.willrees23.listener.PlayerQuitListener;
+import com.github.willrees23.listener.ZiplineProtectionListener;
 import com.github.willrees23.listener.ZiplineRideListener;
 import com.github.willrees23.listener.ZiplineTriggerListener;
 import com.github.willrees23.zipline.ZiplineIndex;
 import com.github.willrees23.zipline.ZiplineManager;
+import com.github.willrees23.zipline.ZiplineProtection;
 import com.github.willrees23.zipline.ZiplineStorage;
 import com.github.willrees23.zipline.effect.ZiplineEffectTask;
 import com.github.willrees23.zipline.ride.RideManager;
@@ -60,6 +62,7 @@ public class ZiplinesPlugin extends JavaPlugin {
         register(new PlayerQuitListener(ziplines, rides));
         register(new ZiplineTriggerListener(rides));
         register(new ZiplineRideListener(rides, seatFactory));
+        register(new ZiplineProtectionListener(new ZiplineProtection(index), config));
     }
 
     @Override
