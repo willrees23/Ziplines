@@ -18,6 +18,10 @@ defaults:
   path-particle: CLOUD
   # Particle circling each end of the line, marking where it can be boarded.
   endpoint-particle: END_ROD
+  # Hold the line together: its blocks cannot be mined, burnt, blown up, carried off by an enderman
+  # or pushed about by a piston. Deleting the zipline still takes them down as it always did. Only
+  # does anything when path-type is BLOCK, since a PARTICLE line puts nothing in the world to break.
+  unbreakable: true
 
   # What starts a ride: WALK into the end of the line, or RIGHT_CLICK near it.
   trigger: WALK
